@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, List, Union
 from datetime import datetime
 
 class EventBase(BaseModel):
@@ -9,10 +9,20 @@ class EventBase(BaseModel):
     end_utc: datetime
     rrule: Optional[str] = None
     exdates: Optional[List[str]] = None
-    kid_ids: Optional[List[str]] = None
+    kid_ids: Optional[List[Union[str, int]]] = None
     category: str = Field(..., pattern="^(school|after-school|family)$")
     source: str = Field(default="manual", pattern="^(manual|ics|google|outlook)$")
     created_by: Optional[str] = None
+    
+    @field_validator('kid_ids', mode='before')
+    @classmethod
+    def normalize_kid_ids(cls, v):
+        """Normalize kid_ids to strings"""
+        if v is None:
+            return None
+        if isinstance(v, list):
+            return [str(item) for item in v]
+        return v
 
 class EventCreate(EventBase):
     pass
@@ -24,7 +34,7 @@ class EventUpdate(BaseModel):
     end_utc: Optional[datetime] = None
     rrule: Optional[str] = None
     exdates: Optional[List[str]] = None
-    kid_ids: Optional[List[str]] = None
+    kid_ids: Optional[List[Union[str, int]]] = None
     category: Optional[str] = Field(None, pattern="^(school|after-school|family)$")
     source: Optional[str] = Field(None, pattern="^(manual|ics|google|outlook)$")
 

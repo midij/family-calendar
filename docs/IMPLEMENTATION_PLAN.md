@@ -48,7 +48,7 @@ This document breaks down the family calendar MVP into sequential, testable task
 ---
 
 ## Task 3: Core API Endpoints
-**Status**: not-started  
+**Status**: completed  
 **Order**: 3  
 **Goal**: Implement the basic REST API endpoints for events and kids
 
