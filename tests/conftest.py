@@ -3,9 +3,11 @@ import tempfile
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.database import Base
+from fastapi.testclient import TestClient
+from app.database import Base, get_db
 from app.models.kid import Kid
 from app.models.event import Event
+from app.main import app
 from datetime import datetime, timezone
 
 # Create a temporary SQLite database for testing
@@ -50,8 +52,8 @@ def client(db_session):
     
     app.dependency_overrides[get_db] = override_get_db
     
-    test_client = TestClient(app)
-    yield test_client
+    with TestClient(app) as test_client:
+        yield test_client
     
     app.dependency_overrides.clear()
 
@@ -70,8 +72,8 @@ def sample_event_data():
     return {
         "title": "钢琴课",
         "location": "艺术中心302",
-        "start_utc": "2025-09-02T08:00:00Z",
-        "end_utc": "2025-09-02T09:00:00Z",
+        "start_utc": datetime(2025, 9, 2, 8, 0, 0, tzinfo=timezone.utc),
+        "end_utc": datetime(2025, 9, 2, 9, 0, 0, tzinfo=timezone.utc),
         "rrule": "FREQ=WEEKLY;BYDAY=TU,TH;UNTIL=2025-12-20T00:00:00Z",
         "exdates": ["2025-10-01"],
         "kid_ids": ["1"],
@@ -88,6 +90,22 @@ def sample_kid(db_session, sample_kid_data):
     db_session.commit()
     db_session.refresh(kid)
     return kid
+
+@pytest.fixture
+def sample_event_api_data():
+    """Sample event data for API testing (with ISO strings)"""
+    return {
+        "title": "钢琴课",
+        "location": "艺术中心302",
+        "start_utc": "2025-09-02T08:00:00Z",
+        "end_utc": "2025-09-02T09:00:00Z",
+        "rrule": "FREQ=WEEKLY;BYDAY=TU,TH;UNTIL=2025-12-20T00:00:00Z",
+        "exdates": ["2025-10-01"],
+        "kid_ids": ["1"],
+        "category": "after-school",
+        "source": "manual",
+        "created_by": "admin"
+    }
 
 @pytest.fixture
 def sample_event(db_session, sample_event_data):

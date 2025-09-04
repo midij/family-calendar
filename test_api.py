@@ -145,6 +145,103 @@ class APITester:
         
         return True
     
+    def test_rrule_functionality(self):
+        """Test RRULE and event expansion functionality"""
+        print("\n🔄 Testing RRULE Functionality...")
+        
+        # Test creating a recurring event
+        recurring_event_data = {
+            "title": "Weekly Piano Lesson",
+            "start_utc": "2025-09-02T08:00:00Z",
+            "end_utc": "2025-09-02T09:00:00Z",
+            "rrule": "FREQ=WEEKLY;BYDAY=TU;UNTIL=2025-12-20T00:00:00Z",
+            "exdates": ["2025-10-01"],
+            "kid_ids": ["1"],
+            "category": "after-school",
+            "source": "manual"
+        }
+        
+        response = self.session.post(f"{self.base_url}/v1/events/", json=recurring_event_data)
+        if response.status_code == 200:
+            print("✅ POST /v1/events/ with RRULE - OK")
+            created_event = response.json()
+            recurring_event_id = created_event["id"]
+        else:
+            print(f"❌ POST /v1/events/ with RRULE - Failed: {response.status_code}")
+            return False
+        
+        # Test RRULE validation
+        response = self.session.post(f"{self.base_url}/v1/events/validate-rrule", 
+                                   data="FREQ=WEEKLY;BYDAY=TU,TH")
+        if response.status_code == 200:
+            print("✅ POST /v1/events/validate-rrule - OK")
+            validation_data = response.json()
+            assert validation_data["valid"] is True
+        else:
+            print(f"❌ POST /v1/events/validate-rrule - Failed: {response.status_code}")
+            return False
+        
+        # Test invalid RRULE validation
+        response = self.session.post(f"{self.base_url}/v1/events/validate-rrule", 
+                                   data="INVALID=RULE")
+        if response.status_code == 200:
+            print("✅ POST /v1/events/validate-rrule (invalid) - OK")
+            validation_data = response.json()
+            assert validation_data["valid"] is False
+        else:
+            print(f"❌ POST /v1/events/validate-rrule (invalid) - Failed: {response.status_code}")
+            return False
+        
+        # Test event expansion
+        response = self.session.get(f"{self.base_url}/v1/events/{recurring_event_id}/expand")
+        if response.status_code == 200:
+            print("✅ GET /v1/events/{id}/expand - OK")
+            expanded_instances = response.json()
+            assert len(expanded_instances) > 1  # Should have multiple instances
+        else:
+            print(f"❌ GET /v1/events/{id}/expand - Failed: {response.status_code}")
+            return False
+        
+        # Test expanded events endpoint
+        response = self.session.get(f"{self.base_url}/v1/events/expanded/")
+        if response.status_code == 200:
+            print("✅ GET /v1/events/expanded/ - OK")
+            expanded_events = response.json()
+            print(f"   Found {len(expanded_events)} expanded event instances")
+        else:
+            print(f"❌ GET /v1/events/expanded/ - Failed: {response.status_code}")
+            return False
+        
+        # Test weekly events endpoint
+        response = self.session.get(f"{self.base_url}/v1/events/weekly/?week_start=2025-09-01T00:00:00Z")
+        if response.status_code == 200:
+            print("✅ GET /v1/events/weekly/ - OK")
+            weekly_events = response.json()
+            print(f"   Found {len(weekly_events)} events for the week")
+        else:
+            print(f"❌ GET /v1/events/weekly/ - Failed: {response.status_code}")
+            return False
+        
+        # Test daily events endpoint
+        response = self.session.get(f"{self.base_url}/v1/events/daily/?day=2025-09-02T00:00:00Z")
+        if response.status_code == 200:
+            print("✅ GET /v1/events/daily/ - OK")
+            daily_events = response.json()
+            print(f"   Found {len(daily_events)} events for the day")
+        else:
+            print(f"❌ GET /v1/events/daily/ - Failed: {response.status_code}")
+            return False
+        
+        # Clean up
+        response = self.session.delete(f"{self.base_url}/v1/events/{recurring_event_id}")
+        if response.status_code == 200:
+            print("✅ DELETE recurring event - OK")
+        else:
+            print(f"❌ DELETE recurring event - Failed: {response.status_code}")
+            return False
+        
+        return True
+    
     def test_error_handling(self):
         """Test error handling"""
         print("\n🚨 Testing Error Handling...")
@@ -194,6 +291,9 @@ class APITester:
             return False
         
         if not self.test_events_api():
+            return False
+        
+        if not self.test_rrule_functionality():
             return False
         
         if not self.test_error_handling():

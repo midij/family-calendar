@@ -70,23 +70,29 @@ This document breaks down the family calendar MVP into sequential, testable task
 ---
 
 ## Task 4: RRULE & Event Expansion
-**Status**: not-started  
+**Status**: completed  
 **Order**: 4  
 **Goal**: Implement recurring event logic and event expansion
 
 **Implementation**:
-- Integrate python-dateutil for RRULE parsing
-- Implement RRULE expansion logic (DAILY/WEEKLY/MONTHLY)
-- Handle EXDATE exceptions
-- Create event instance generation from recurring rules
-- Implement timezone handling (UTC storage, local display)
+- ✅ Integrate python-dateutil for RRULE parsing
+- ✅ Implement RRULE expansion logic (DAILY/WEEKLY/MONTHLY)
+- ✅ Handle EXDATE exceptions
+- ✅ Create event instance generation from recurring rules
+- ✅ Implement timezone handling (UTC storage, local display)
+- ✅ Create EventExpansionService for database integration
+- ✅ Add API endpoints for expanded events (/expanded/, /weekly/, /daily/)
+- ✅ Implement comprehensive error handling and validation
 
 **Test Plan**:
-- Test various RRULE patterns (daily, weekly, monthly)
-- Verify EXDATE exceptions work correctly
-- Test timezone conversions
-- Validate event expansion performance
-- Test edge cases (past dates, complex rules)
+- ✅ Test various RRULE patterns (daily, weekly, monthly)
+- ✅ Verify EXDATE exceptions work correctly
+- ✅ Test timezone conversions
+- ✅ Validate event expansion performance
+- ✅ Test edge cases (past dates, complex rules)
+- ✅ 22 RRULE service tests passing
+- ✅ 10 event expansion service tests passing
+- ✅ API integration tests passing
 
 ---
 

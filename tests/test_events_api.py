@@ -41,16 +41,16 @@ class TestEventsAPI:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
     
-    def test_create_event(self, client, sample_event_data):
+    def test_create_event(self, client, sample_event_api_data):
         """Test creating a new event"""
-        response = client.post("/v1/events/", json=sample_event_data)
+        response = client.post("/v1/events/", json=sample_event_api_data)
         assert response.status_code == 200
         
         data = response.json()
-        assert data["title"] == sample_event_data["title"]
-        assert data["location"] == sample_event_data["location"]
-        assert data["category"] == sample_event_data["category"]
-        assert data["kid_ids"] == sample_event_data["kid_ids"]
+        assert data["title"] == sample_event_api_data["title"]
+        assert data["location"] == sample_event_api_data["location"]
+        assert data["category"] == sample_event_api_data["category"]
+        assert data["kid_ids"] == sample_event_api_data["kid_ids"]
         assert "id" in data
         assert "created_at" in data
     
