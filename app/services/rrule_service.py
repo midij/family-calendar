@@ -295,9 +295,10 @@ class RRuleService:
             return True, ""
         
         try:
-            if not rrule_str.startswith("RRULE:"):
-                rrule_str = f"RRULE:{rrule_str}"
-            rrule.rrulestr(rrule_str)
+            # Use our own parse_rrule method for validation
+            parsed = RRuleService.parse_rrule(rrule_str)
+            if parsed is None:
+                return False, "Invalid RRULE format"
             return True, ""
         except (ValueError, TypeError) as e:
             return False, str(e)

@@ -97,23 +97,23 @@ This document breaks down the family calendar MVP into sequential, testable task
 ---
 
 ## Task 5: Event Management API
-**Status**: not-started  
+**Status**: completed  
 **Order**: 5  
 **Goal**: Complete the full event management API
 
 **Implementation**:
-- Implement PATCH /v1/events/{id} endpoint
-- Implement DELETE /v1/events/{id} endpoint
-- Add idempotency support with Idempotency-Key header
-- Implement event update logic
-- Add proper error handling for all operations
+- ✅ Implement PATCH /v1/events/{id} endpoint
+- ✅ Implement DELETE /v1/events/{id} endpoint
+- ✅ Add idempotency support with Idempotency-Key header
+- ✅ Implement event update logic
+- ✅ Add proper error handling for all operations
 
 **Test Plan**:
-- Test event updates with various scenarios
-- Verify event deletion works correctly
-- Test idempotency functionality
-- Validate error handling for invalid operations
-- Test concurrent operations
+- ✅ Test event updates with various scenarios
+- ✅ Verify event deletion works correctly
+- ✅ Test idempotency functionality
+- ✅ Validate error handling for invalid operations
+- ✅ Test concurrent operations
 
 ---
 

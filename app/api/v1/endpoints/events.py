@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
+import hashlib
+import json
 from app.database import get_db
 from app.schemas.event import Event, EventCreate, EventUpdate
 from app.models.event import Event as EventModel
@@ -73,36 +75,102 @@ def create_event(event: EventCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=f"Failed to create event: {str(e)}")
 
 @router.patch("/{event_id}", response_model=Event)
-def update_event(event_id: int, event_update: EventUpdate, db: Session = Depends(get_db)):
-    """Update an existing event"""
-    db_event = db.query(EventModel).filter(EventModel.id == event_id).first()
+def update_event(
+    event_id: int, 
+    event_update: EventUpdate, 
+    db: Session = Depends(get_db),
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")
+):
+    """Update an existing event with idempotency support"""
+    from app.services.idempotency_service import IdempotencyService
+    
+    # Check if event exists
+    db_event = IdempotencyService.validate_event_exists(db, event_id)
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found")
     
+    # Get update data
+    update_data = event_update.model_dump(exclude_unset=True)
+    
+    # Validate update data
+    is_valid, error_message = IdempotencyService.validate_event_update_data(update_data)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_message)
+    
+    # Handle idempotency if key is provided
+    if idempotency_key:
+        # Check if this operation was already performed
+        cached_result = IdempotencyService.check_idempotency(
+            idempotency_key, "update", event_id
+        )
+        if cached_result:
+            return cached_result
+    
     try:
         # Update only provided fields
-        update_data = event_update.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_event, field, value)
         
+        # Update the updated_at timestamp
+        db_event.updated_at = datetime.now(timezone.utc)
+        
         db.commit()
         db.refresh(db_event)
+        
+        # Store result for idempotency if key was provided
+        if idempotency_key:
+            IdempotencyService.store_idempotency_result(
+                idempotency_key, "update", event_id, db_event
+            )
+        
         return db_event
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to update event: {str(e)}")
 
 @router.delete("/{event_id}")
-def delete_event(event_id: int, db: Session = Depends(get_db)):
-    """Delete an event"""
-    db_event = db.query(EventModel).filter(EventModel.id == event_id).first()
+def delete_event(
+    event_id: int, 
+    db: Session = Depends(get_db),
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")
+):
+    """Delete an event with idempotency support"""
+    from app.services.idempotency_service import IdempotencyService
+    
+    # Check if event exists
+    db_event = IdempotencyService.validate_event_exists(db, event_id)
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found")
     
+    # Handle idempotency if key is provided
+    if idempotency_key:
+        # Check if this operation was already performed
+        cached_result = IdempotencyService.check_idempotency(
+            idempotency_key, "delete", event_id
+        )
+        if cached_result:
+            return cached_result
+    
     try:
+        # Store event data before deletion for idempotency
+        event_data = {
+            "id": db_event.id,
+            "title": db_event.title,
+            "deleted_at": datetime.now(timezone.utc).isoformat()
+        }
+        
         db.delete(db_event)
         db.commit()
-        return {"message": "Event deleted successfully"}
+        
+        result = {"message": "Event deleted successfully", "event_id": event_id}
+        
+        # Store result for idempotency if key was provided
+        if idempotency_key:
+            IdempotencyService.store_idempotency_result(
+                idempotency_key, "delete", event_id, result
+            )
+        
+        return result
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to delete event: {str(e)}")
