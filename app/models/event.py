@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Text
+from sqlalchemy import Column, String, DateTime, JSON, Index
 from app.models.base import BaseModel
 import json
 
@@ -7,31 +7,26 @@ class Event(BaseModel):
     
     title = Column(String, nullable=False)
     location = Column(String, nullable=True)
-    start_utc = Column(DateTime(timezone=True), nullable=False)
-    end_utc = Column(DateTime(timezone=True), nullable=False)
+    start_utc = Column(DateTime(timezone=True), nullable=False, index=True)
+    end_utc = Column(DateTime(timezone=True), nullable=False, index=True)
     rrule = Column(String, nullable=True)  # RFC5545 RRULE string
-    exdates = Column(Text, nullable=True)  # Array of ISO date strings (stored as JSON text)
-    kid_ids = Column(Text, nullable=True)  # Array of kid IDs (stored as JSON text)
+    exdates = Column(JSON, nullable=True)  # Array of ISO date strings
+    kid_ids = Column(JSON, nullable=True)  # Array of kid IDs
     category = Column(String, nullable=False)  # school, after-school, family
     source = Column(String, nullable=False, default="manual")  # manual, ics, google, outlook
     created_by = Column(String, nullable=True)
     
+    # Add composite index for time range queries
+    __table_args__ = (
+        Index('ix_events_time_range', 'start_utc', 'end_utc'),
+    )
+    
     @property
     def kid_ids_list(self):
-        """Convert stored JSON string back to list"""
-        if self.kid_ids:
-            try:
-                return json.loads(self.kid_ids)
-            except (json.JSONDecodeError, TypeError):
-                return []
-        return []
+        """Get kid_ids as a list"""
+        return self.kid_ids or []
     
     @property
     def exdates_list(self):
-        """Convert stored JSON string back to list"""
-        if self.exdates:
-            try:
-                return json.loads(self.exdates)
-            except (json.JSONDecodeError, TypeError):
-                return []
-        return [] 
+        """Get exdates as a list"""
+        return self.exdates or [] 

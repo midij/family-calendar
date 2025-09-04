@@ -6,7 +6,7 @@ This document breaks down the family calendar MVP into sequential, testable task
 ---
 
 ## Task 1: Project Setup & Infrastructure
-**Status**: not-started  
+**Status**: completed  
 **Order**: 1  
 **Goal**: Establish the basic project structure and development environment
 
@@ -27,7 +27,7 @@ This document breaks down the family calendar MVP into sequential, testable task
 ---
 
 ## Task 2: Database Schema & Models
-**Status**: not-started  
+**Status**: completed  
 **Order**: 2  
 **Goal**: Implement the core data models and database schema
 

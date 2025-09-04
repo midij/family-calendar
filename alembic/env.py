@@ -4,6 +4,8 @@ from sqlalchemy import pool
 from alembic import context
 from app.database import Base
 from app.models import kid, event  # Import models to register them
+from app.models.kid import Kid
+from app.models.event import Event
 from app.config import settings
 
 # this is the Alembic Config object, which provides

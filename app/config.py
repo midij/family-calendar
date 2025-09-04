@@ -2,8 +2,8 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    # Database settings - simplified for local testing
-    DATABASE_URL: str = "sqlite:///./family_calendar.db"  # Use SQLite for local testing
+    # Database settings
+    DATABASE_URL: str = "sqlite:///./family_calendar.db"  # Default to SQLite for local testing
     REDIS_URL: str = "redis://localhost:6379"  # Optional for now
     
     # API settings
@@ -13,8 +13,24 @@ class Settings(BaseSettings):
     # CORS settings
     BACKEND_CORS_ORIGINS: list = ["*"]
     
-    # Local development flag
+    # Environment settings
+    ENVIRONMENT: str = "development"  # development, production
     LOCAL_DEV: bool = True
+    
+    # PostgreSQL settings (for production)
+    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "password"
+    POSTGRES_DB: str = "family_calendar"
+    POSTGRES_PORT: str = "5432"
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        
+        # Override DATABASE_URL if PostgreSQL environment variables are set
+        if self.ENVIRONMENT == "production" or os.getenv("USE_POSTGRES"):
+            self.DATABASE_URL = f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            self.LOCAL_DEV = False
     
     class Config:
         env_file = ".env"
