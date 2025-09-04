@@ -118,24 +118,24 @@ This document breaks down the family calendar MVP into sequential, testable task
 ---
 
 ## Task 6: Import Functionality
-**Status**: not-started  
+**Status**: completed  
 **Order**: 6  
 **Goal**: Implement CSV and ICS file import capabilities
 
 **Implementation**:
-- Create POST /v1/import/csv endpoint
-- Implement CSV parsing with proper validation
-- Create POST /v1/import/ics endpoint
-- Implement ICS file parsing (VEVENT handling)
-- Add file upload handling and validation
-- Implement import error handling and reporting
+- ✅ Create POST /v1/import/csv endpoint
+- ✅ Implement CSV parsing with proper validation
+- ✅ Create POST /v1/import/ics endpoint
+- ✅ Implement ICS file parsing (VEVENT handling)
+- ✅ Add file upload handling and validation
+- ✅ Implement import error handling and reporting
 
 **Test Plan**:
-- Test CSV import with various formats
-- Verify ICS import with different calendar files
-- Test error handling for malformed files
-- Validate imported data accuracy
-- Test large file handling
+- ✅ Test CSV import with various formats
+- ✅ Verify ICS import with different calendar files
+- ✅ Test error handling for malformed files
+- ✅ Validate imported data accuracy
+- ✅ Test large file handling
 
 ---
 
