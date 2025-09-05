@@ -875,8 +875,8 @@
             
             if (dayIndex < 0 || dayIndex > 6) return;
 
-            const startTime = eventDate.getHours() + eventDate.getMinutes() / 60;
-            const endTime = new Date(event.end_utc).getHours() + new Date(event.end_utc).getMinutes() / 60;
+            const startTime = eventDate.getUTCHours() + eventDate.getUTCMinutes() / 60;
+            const endTime = new Date(event.end_utc).getUTCHours() + new Date(event.end_utc).getUTCMinutes() / 60;
 
             // Check if event is outside default time range (8:00-22:00)
             const isOutsideRange = startTime < 8 || endTime > 22;

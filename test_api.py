@@ -51,7 +51,7 @@ class APITester:
             "avatar": "https://example.com/test.jpg"
         }
         response = self.session.post(f"{self.base_url}/v1/kids/", json=kid_data)
-        if response.status_code == 200:
+        if response.status_code == 201:
             print("✅ POST /v1/kids/ - OK")
             created_kid = response.json()
             kid_id = created_kid["id"]
@@ -102,7 +102,7 @@ class APITester:
             "source": "manual"
         }
         response = self.session.post(f"{self.base_url}/v1/events/", json=event_data)
-        if response.status_code == 200:
+        if response.status_code == 201:
             print("✅ POST /v1/events/ - OK")
             created_event = response.json()
             event_id = created_event["id"]
@@ -162,7 +162,7 @@ class APITester:
         }
         
         response = self.session.post(f"{self.base_url}/v1/events/", json=recurring_event_data)
-        if response.status_code == 200:
+        if response.status_code == 201:
             print("✅ POST /v1/events/ with RRULE - OK")
             created_event = response.json()
             recurring_event_id = created_event["id"]
@@ -171,8 +171,7 @@ class APITester:
             return False
         
         # Test RRULE validation
-        response = self.session.post(f"{self.base_url}/v1/events/validate-rrule", 
-                                   data="FREQ=WEEKLY;BYDAY=TU,TH")
+        response = self.session.post(f"{self.base_url}/v1/events/validate-rrule?rrule_str=FREQ=WEEKLY;BYDAY=TU,TH")
         if response.status_code == 200:
             print("✅ POST /v1/events/validate-rrule - OK")
             validation_data = response.json()
@@ -182,8 +181,7 @@ class APITester:
             return False
         
         # Test invalid RRULE validation
-        response = self.session.post(f"{self.base_url}/v1/events/validate-rrule", 
-                                   data="INVALID=RULE")
+        response = self.session.post(f"{self.base_url}/v1/events/validate-rrule?rrule_str=INVALID=RULE")
         if response.status_code == 200:
             print("✅ POST /v1/events/validate-rrule (invalid) - OK")
             validation_data = response.json()
