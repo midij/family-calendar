@@ -357,6 +357,7 @@
         <div class="header">
             <h1>🏠 Family Calendar Admin</h1>
             <p>Manage your family's calendar, kids, and events</p>
+            <p><small>⏰ All times are in your local timezone: <span id="timezoneInfo"></span></small></p>
             <div class="nav-buttons">
                 <a href="wall.html" class="nav-btn secondary">📺 View Wall Display</a>
                 <button class="nav-btn" onclick="refreshData()">🔄 Refresh Data</button>
@@ -454,7 +455,7 @@
                             <input type="date" id="eventStartDate" required>
                         </div>
                         <div class="form-group">
-                            <label for="eventStartTime">Start Time *</label>
+                            <label for="eventStartTime">Start Time * <small>(Local Time)</small></label>
                             <input type="time" id="eventStartTime" required>
                         </div>
                     </div>
@@ -465,7 +466,7 @@
                             <input type="date" id="eventEndDate" required>
                         </div>
                         <div class="form-group">
-                            <label for="eventEndTime">End Time *</label>
+                            <label for="eventEndTime">End Time * <small>(Local Time)</small></label>
                             <input type="time" id="eventEndTime" required>
                         </div>
                     </div>
@@ -523,6 +524,15 @@
         async function init() {
             try {
                 showLoading(true);
+                
+                // Set timezone information
+                const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const offset = new Date().getTimezoneOffset();
+                const offsetHours = Math.abs(offset) / 60;
+                const offsetSign = offset <= 0 ? '+' : '-';
+                const offsetString = `UTC${offsetSign}${offsetHours}`;
+                document.getElementById('timezoneInfo').textContent = `${timezone} (${offsetString})`;
+                
                 await loadKids();
                 await loadEvents();
                 setupEventListeners();
@@ -723,8 +733,13 @@
             const endDate = document.getElementById('eventEndDate').value;
             const endTime = document.getElementById('eventEndTime').value;
             
-            const startUtc = new Date(`${startDate}T${startTime}`).toISOString();
-            const endUtc = new Date(`${endDate}T${endTime}`).toISOString();
+            // Convert local time to UTC properly
+            const startLocal = new Date(`${startDate}T${startTime}`);
+            const endLocal = new Date(`${endDate}T${endTime}`);
+            
+            // Convert to UTC by adjusting for timezone offset
+            const startUtc = new Date(startLocal.getTime() - (startLocal.getTimezoneOffset() * 60000)).toISOString();
+            const endUtc = new Date(endLocal.getTime() - (endLocal.getTimezoneOffset() * 60000)).toISOString();
             
             const selectedKids = Array.from(document.getElementById('eventKids').selectedOptions)
                 .map(option => option.value);
@@ -804,10 +819,14 @@
             
             document.getElementById('eventTitle').value = event.title;
             document.getElementById('eventLocation').value = event.location || '';
-            document.getElementById('eventStartDate').value = startDate.toISOString().split('T')[0];
-            document.getElementById('eventStartTime').value = startDate.toTimeString().slice(0, 5);
-            document.getElementById('eventEndDate').value = endDate.toISOString().split('T')[0];
-            document.getElementById('eventEndTime').value = endDate.toTimeString().slice(0, 5);
+            // Convert UTC times to local time for form display
+            const startLocal = new Date(startDate.getTime() + (startDate.getTimezoneOffset() * 60000));
+            const endLocal = new Date(endDate.getTime() + (endDate.getTimezoneOffset() * 60000));
+            
+            document.getElementById('eventStartDate').value = startLocal.toISOString().split('T')[0];
+            document.getElementById('eventStartTime').value = startLocal.toTimeString().slice(0, 5);
+            document.getElementById('eventEndDate').value = endLocal.toISOString().split('T')[0];
+            document.getElementById('eventEndTime').value = endLocal.toTimeString().slice(0, 5);
             document.getElementById('eventCategory').value = event.category;
             document.getElementById('eventRRule').value = event.rrule || '';
             
