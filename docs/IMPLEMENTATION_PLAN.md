@@ -165,26 +165,30 @@ This document breaks down the family calendar MVP into sequential, testable task
 ---
 
 ## Task 8: Frontend Wall Display
-**Status**: not-started  
+**Status**: completed  
 **Order**: 8  
 **Goal**: Create the wall-mounted calendar display interface
 
 **Implementation**:
-- Create wall.html with responsive grid layout
-- Implement weekly view (Mon-Sun columns)
-- Add time axis (08:00-22:00 with auto-expansion)
-- Implement child track rows with color coding
-- Add navigation buttons (today, last week, next week)
-- Implement responsive font sizing with clamp()
-- Add event card rendering and positioning
+- ✅ Create wall.html with responsive grid layout
+- ✅ Implement weekly view (Mon-Sun columns)
+- ✅ Add time axis (08:00-22:00 with auto-expansion)
+- ✅ Implement child track rows with color coding
+- ✅ Add navigation buttons (today, last week, next week)
+- ✅ Implement responsive font sizing with clamp()
+- ✅ Add event card rendering and positioning
+- ✅ Integrate real-time updates via version endpoint polling
+- ✅ Add comprehensive testing and documentation
 
 **Test Plan**:
-- Verify responsive design works on different screen sizes
-- Test weekly navigation functionality
-- Validate time axis expansion logic
-- Confirm child track colors are distinct
-- Test event rendering and positioning
-- Verify font sizes are readable from 2-3 meters
+- ✅ Verify responsive design works on different screen sizes
+- ✅ Test weekly navigation functionality
+- ✅ Validate time axis expansion logic
+- ✅ Confirm child track colors are distinct
+- ✅ Test event rendering and positioning
+- ✅ Verify font sizes are readable from 2-3 meters
+- ✅ Test real-time update mechanism
+- ✅ Validate API connectivity and error handling
 
 ---
 
