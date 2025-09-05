@@ -1387,8 +1387,12 @@
         }
 
         function getDayIndex(date, weekStart) {
+            // Both dates are in local time, so we can calculate the difference directly
             const diffTime = date.getTime() - weekStart.getTime();
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            console.log(`getDayIndex: event date ${date.toLocaleDateString()}, week start ${weekStart.toLocaleDateString()}, diff days: ${diffDays}`);
+            
             return diffDays;
         }
 
@@ -1397,13 +1401,14 @@
             weekEnd.setDate(weekEnd.getDate() + 6);
             weekEnd.setHours(23, 59, 59, 999);
             
-            // Convert week boundaries to UTC for comparison with UTC event dates
-            const weekStartUTC = new Date(weekStart.getTime() - (weekStart.getTimezoneOffset() * 60000));
-            const weekEndUTC = new Date(weekEnd.getTime() - (weekEnd.getTimezoneOffset() * 60000));
+            // The date parameter is already a Date object created from UTC string
+            // JavaScript automatically converts it to local time when creating the Date object
+            // So we can compare directly with local week boundaries
             
-            console.log(`Checking if ${date.toISOString()} is between ${weekStartUTC.toISOString()} and ${weekEndUTC.toISOString()}`);
+            console.log(`Checking if event ${date.toISOString()} is between ${weekStart.toISOString()} and ${weekEnd.toISOString()}`);
+            console.log(`Event local date: ${date.toLocaleDateString()}, Week: ${weekStart.toLocaleDateString()} to ${weekEnd.toLocaleDateString()}`);
             
-            return date >= weekStartUTC && date <= weekEndUTC;
+            return date >= weekStart && date <= weekEnd;
         }
 
         function isSameDay(date1, date2) {
