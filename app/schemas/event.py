@@ -10,7 +10,7 @@ class EventBase(BaseModel):
     rrule: Optional[str] = None
     exdates: Optional[List[str]] = None
     kid_ids: Optional[List[Union[str, int]]] = None
-    category: str = Field(..., pattern="^(school|after-school|family)$")
+    category: str = Field(..., pattern="^(school|after-school|family|sports|education|health|test)$")
     source: str = Field(default="manual", pattern="^(manual|ics|google|outlook)$")
     created_by: Optional[str] = None
     
@@ -35,7 +35,7 @@ class EventUpdate(BaseModel):
     rrule: Optional[str] = None
     exdates: Optional[List[str]] = None
     kid_ids: Optional[List[Union[str, int]]] = None
-    category: Optional[str] = Field(None, pattern="^(school|after-school|family)$")
+    category: Optional[str] = Field(None, pattern="^(school|after-school|family|sports|education|health|test)$")
     source: Optional[str] = Field(None, pattern="^(manual|ics|google|outlook)$")
 
 class Event(EventBase):
