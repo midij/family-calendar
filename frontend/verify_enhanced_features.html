@@ -220,7 +220,7 @@
 
         function openEnhancedWall() {
             try {
-                const wallWindow = window.open('wall_enhanced.html', '_blank', 'width=1400,height=900');
+                const wallWindow = window.open('wall.html', '_blank', 'width=1400,height=900');
                 if (wallWindow) {
                     updateStatus('✅ Enhanced wall display opened successfully', 'success');
                     addResult('Enhanced wall display opened in new window', 'success');
@@ -234,7 +234,7 @@
             }
         }
 
-        // Overlap detection algorithm (same as in wall_enhanced.html)
+        // Overlap detection algorithm (same as in wall.html)
         function detectOverlaps(events) {
             if (events.length === 0) return [];
             

@@ -23,9 +23,15 @@ class EventBase(BaseModel):
         if isinstance(v, list):
             return [str(item) for item in v]
         return v
-
+    
 class EventCreate(EventBase):
-    pass
+    @field_validator('end_utc')
+    @classmethod
+    def validate_end_after_start(cls, v, info):
+        """Validate that end_utc is after start_utc"""
+        if 'start_utc' in info.data and v <= info.data['start_utc']:
+            raise ValueError('end_utc must be after start_utc')
+        return v
 
 class EventUpdate(BaseModel):
     title: Optional[str] = None

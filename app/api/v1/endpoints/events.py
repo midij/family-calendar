@@ -61,8 +61,14 @@ def get_version_info(db: Session = Depends(get_db)):
     """Get current version information for polling fallback"""
     from sqlalchemy import func
     
-    # Get the latest updated_at timestamp from events table
-    latest_updated = db.query(func.max(EventModel.updated_at)).scalar()
+    # Get the latest event by ID (most recent) and use its updated_at or created_at
+    latest_event = db.query(EventModel).order_by(EventModel.id.desc()).first()
+    
+    if latest_event:
+        # Use updated_at if available, otherwise use created_at
+        latest_updated = latest_event.updated_at if latest_event.updated_at else latest_event.created_at
+    else:
+        latest_updated = None
     
     return {
         "last_updated": latest_updated.isoformat() if latest_updated else None,
@@ -83,11 +89,14 @@ async def create_event(event: EventCreate, db: Session = Depends(get_db)):
     try:
         # Create the event directly - SQLAlchemy will handle JSON serialization
         db_event = EventModel(**event.model_dump())
+        
+        # Explicitly set updated_at to current time (since server_default might not work reliably)
+        db_event.updated_at = datetime.now(timezone.utc)
+        
         db.add(db_event)
         db.commit()
         db.refresh(db_event)
         
-        # Database timestamp will be automatically updated by SQLAlchemy
         return db_event
     except Exception as e:
         db.rollback()
