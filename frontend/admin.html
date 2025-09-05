@@ -87,6 +87,144 @@
             margin-bottom: 20px;
         }
 
+        /* Mobile menu styles */
+        .mobile-menu {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            margin-top: 15px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mobile-menu-content {
+            padding: 15px;
+        }
+        
+        .mobile-menu-item {
+            display: block;
+            width: 100%;
+            background: #f7fafc;
+            color: #4a5568;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+            text-decoration: none;
+            text-align: left;
+        }
+        
+        .mobile-menu-item:hover {
+            background: #edf2f7;
+            color: #2d3748;
+        }
+        
+        .mobile-menu-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Mobile-first responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .nav-buttons {
+                flex-direction: row;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            
+            .nav-btn {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                text-align: center;
+                flex: 1;
+                min-width: 120px;
+            }
+            
+            .mobile-menu-toggle {
+                display: inline-block !important;
+            }
+            
+            .nav-btn:not(.mobile-menu-toggle) {
+                display: none;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .form-group {
+                margin-bottom: 15px;
+            }
+            
+            .list-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .list-item-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            .bulk-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .bulk-actions button {
+                width: 100%;
+            }
+        }
+
+        /* Tablet optimizations */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .form-row {
+                flex-direction: row;
+                gap: 15px;
+            }
+            
+            .form-row .form-group {
+                flex: 1;
+            }
+        }
+
+        /* Large screen optimizations */
+        @media (min-width: 1025px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
         .section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -137,6 +275,8 @@
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.3s ease;
+            min-height: 44px; /* Touch-friendly minimum size */
+            touch-action: manipulation; /* Prevent double-tap zoom */
         }
 
         .form-group input:focus,
@@ -169,6 +309,8 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin-right: 10px;
+            min-height: 44px; /* Touch-friendly minimum size */
+            touch-action: manipulation; /* Prevent double-tap zoom */
             margin-bottom: 10px;
         }
 
@@ -361,6 +503,18 @@
             <div class="nav-buttons">
                 <a href="wall.html" class="nav-btn secondary">📺 View Wall Display</a>
                 <button class="nav-btn" onclick="refreshData()">🔄 Refresh Data</button>
+                <button class="nav-btn mobile-menu-toggle" onclick="toggleMobileMenu()" style="display: none;">☰ Menu</button>
+            </div>
+            
+            <!-- Mobile Navigation Menu -->
+            <div class="mobile-menu" id="mobileMenu" style="display: none;">
+                <div class="mobile-menu-content">
+                    <a href="wall.html" class="mobile-menu-item">📺 Wall Display</a>
+                    <button class="mobile-menu-item" onclick="refreshData()">🔄 Refresh Data</button>
+                    <button class="mobile-menu-item" onclick="scrollToSection('kids-section')">👶 Manage Kids</button>
+                    <button class="mobile-menu-item" onclick="scrollToSection('events-section')">📅 Manage Events</button>
+                    <button class="mobile-menu-item" onclick="scrollToSection('bulk-section')">📦 Bulk Operations</button>
+                </div>
             </div>
         </div>
 
@@ -374,7 +528,7 @@
         </div>
 
         <!-- Bulk Operations -->
-        <div class="bulk-operations">
+        <div class="bulk-operations" id="bulk-section">
             <h2>
                 <span class="section-icon">📁</span>
                 Bulk Operations
@@ -396,7 +550,7 @@
         <!-- Main Content -->
         <div class="main-content">
             <!-- Kids Management -->
-            <div class="section">
+            <div class="section" id="kids-section">
                 <h2>
                     <span class="section-icon">👶</span>
                     Manage Kids
@@ -432,7 +586,7 @@
             </div>
 
             <!-- Events Management -->
-            <div class="section">
+            <div class="section" id="events-section">
                 <h2>
                     <span class="section-icon">📅</span>
                     Manage Events
@@ -519,6 +673,22 @@
         let events = [];
         let editingKidId = null;
         let editingEventId = null;
+
+        // Mobile menu functions
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const isVisible = menu.style.display !== 'none';
+            menu.style.display = isVisible ? 'none' : 'block';
+        }
+        
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Close mobile menu after navigation
+                document.getElementById('mobileMenu').style.display = 'none';
+            }
+        }
 
         // Initialize the application
         async function init() {

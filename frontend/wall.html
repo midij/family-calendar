@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Family Calendar - Wall Display</title>
     <!-- Updated: Enhanced version with all features -->
     <style>
@@ -18,6 +18,14 @@
             color: #333;
             overflow: hidden;
             height: 100vh;
+            /* Tablet optimizations */
+            -webkit-touch-callout: none; /* Disable callout on iOS */
+            -webkit-user-select: none; /* Disable text selection */
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: manipulation; /* Prevent double-tap zoom */
         }
 
         .calendar-container {
@@ -484,6 +492,115 @@
             
             .day-number {
                 font-size: 14px;
+            }
+        }
+
+        /* Tablet Wall Display Optimizations */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            /* Optimized for wall-hanging tablets */
+            .calendar-container {
+                padding: clamp(15px, 2.5vw, 25px);
+            }
+            
+            .header {
+                padding: clamp(20px, 4vw, 30px);
+                margin-bottom: clamp(15px, 3vw, 20px);
+            }
+            
+            .title {
+                font-size: clamp(28px, 5vw, 42px);
+            }
+            
+            .color-legend {
+                gap: clamp(8px, 1.5vw, 12px);
+            }
+            
+            .legend-item {
+                font-size: clamp(14px, 2.5vw, 18px);
+                padding: clamp(6px, 1vw, 10px) clamp(10px, 2vw, 16px);
+            }
+            
+            .calendar-grid {
+                gap: clamp(3px, 0.5vw, 6px);
+            }
+            
+            .day-header {
+                font-size: clamp(16px, 3vw, 20px);
+                padding: clamp(12px, 2vw, 16px) clamp(8px, 1.5vw, 12px);
+            }
+            
+            .time-slot {
+                font-size: clamp(12px, 2vw, 14px);
+                padding: clamp(6px, 1vw, 8px) clamp(4px, 0.8vw, 6px);
+            }
+            
+            .event-card {
+                font-size: clamp(12px, 2vw, 14px);
+                padding: clamp(4px, 0.8vw, 6px) clamp(6px, 1vw, 8px);
+                margin: clamp(1px, 0.2vw, 2px);
+            }
+            
+            .event-title {
+                font-size: clamp(12px, 2vw, 14px);
+            }
+            
+            .event-time {
+                font-size: clamp(10px, 1.5vw, 12px);
+            }
+            
+            /* Larger touch targets for wall tablets */
+            .nav-button {
+                min-height: 48px;
+                min-width: 48px;
+                font-size: clamp(14px, 2.5vw, 18px);
+                padding: clamp(8px, 1.5vw, 12px) clamp(12px, 2vw, 16px);
+            }
+            
+            /* Hide admin button on wall tablets - they should be read-only */
+            .nav-button[href*="admin"] {
+                display: none;
+            }
+            
+            /* Fullscreen mode for wall tablets */
+            body {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                overflow: hidden;
+            }
+        }
+
+        /* Large Desktop Wall Display */
+        @media (min-width: 1025px) {
+            .calendar-container {
+                padding: clamp(20px, 3vw, 30px);
+            }
+            
+            .header {
+                padding: clamp(25px, 4vw, 35px);
+                margin-bottom: clamp(20px, 3vw, 25px);
+            }
+            
+            .title {
+                font-size: clamp(32px, 5vw, 48px);
+            }
+            
+            .legend-item {
+                font-size: clamp(16px, 2.5vw, 20px);
+            }
+            
+            .day-header {
+                font-size: clamp(18px, 3vw, 22px);
+            }
+            
+            .time-slot {
+                font-size: clamp(14px, 2vw, 16px);
+            }
+            
+            .event-card {
+                font-size: clamp(14px, 2vw, 16px);
             }
         }
 
