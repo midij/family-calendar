@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
-from app.schemas.kid import Kid, KidCreate
+from app.schemas.kid import Kid, KidCreate, KidUpdate
 from app.models.kid import Kid as KidModel
 # Removed SSE and VersionService imports - using database timestamp approach
 
@@ -37,6 +37,27 @@ async def create_kid(kid: KidCreate, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to create kid: {str(e)}")
+
+@router.patch("/{kid_id}", response_model=Kid)
+async def update_kid(kid_id: int, kid_update: KidUpdate, db: Session = Depends(get_db)):
+    """Update a kid"""
+    db_kid = db.query(KidModel).filter(KidModel.id == kid_id).first()
+    if not db_kid:
+        raise HTTPException(status_code=404, detail="Kid not found")
+    
+    try:
+        # Update only provided fields
+        update_data = kid_update.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_kid, field, value)
+        
+        db.commit()
+        db.refresh(db_kid)
+        
+        return db_kid
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Failed to update kid: {str(e)}")
 
 @router.delete("/{kid_id}")
 async def delete_kid(kid_id: int, db: Session = Depends(get_db)):

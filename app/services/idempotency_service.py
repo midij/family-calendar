@@ -143,7 +143,7 @@ class IdempotencyService:
         
         # Validate category if provided
         if "category" in update_data and update_data["category"]:
-            valid_categories = ["school", "after-school", "family"]
+            valid_categories = ["school", "after-school", "family", "sports", "education", "health", "test"]
             if update_data["category"] not in valid_categories:
                 return False, f"Invalid category. Must be one of: {', '.join(valid_categories)}"
         
