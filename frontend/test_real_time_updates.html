@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Updates Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .metric {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Real-time Updates Test</h1>
+        <p>This page tests the real-time update mechanism used by the wall display.</p>
+
+        <div class="test-section">
+            <h3>Test Controls</h3>
+            <button onclick="startPolling()">Start Polling</button>
+            <button onclick="stopPolling()">Stop Polling</button>
+            <button onclick="createTestEvent()">Create Test Event</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Metrics</h3>
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-value" id="pollCount">0</div>
+                    <div class="metric-label">Poll Count</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="updateCount">0</div>
+                    <div class="metric-label">Updates Detected</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="avgResponseTime">0ms</div>
+                    <div class="metric-label">Avg Response Time</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="lastUpdate">Never</div>
+                    <div class="metric-label">Last Update</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>Status</h3>
+            <div id="status" class="status info">Ready to start polling</div>
+        </div>
+
+        <div class="test-section">
+            <h3>Activity Log</h3>
+            <div id="log" class="log">Ready to start testing...\n</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/v1';
+        const POLL_INTERVAL = 5000; // 5 seconds for testing
+
+        let pollingInterval = null;
+        let pollCount = 0;
+        let updateCount = 0;
+        let responseTimes = [];
+        let lastVersion = null;
+
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function updateMetrics() {
+            document.getElementById('pollCount').textContent = pollCount;
+            document.getElementById('updateCount').textContent = updateCount;
+            
+            if (responseTimes.length > 0) {
+                const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+                document.getElementById('avgResponseTime').textContent = `${Math.round(avgTime)}ms`;
+            }
+        }
+
+        async function checkForUpdates() {
+            const startTime = Date.now();
+            pollCount++;
+            
+            try {
+                log(`Polling for updates (${pollCount})...`);
+                
+                const response = await fetch(`${API_BASE_URL}/events/version`);
+                const responseTime = Date.now() - startTime;
+                responseTimes.push(responseTime);
+                
+                if (response.ok) {
+                    const versionInfo = await response.json();
+                    
+                    if (lastVersion && versionInfo.last_updated !== lastVersion) {
+                        updateCount++;
+                        log(`🔄 UPDATE DETECTED! Version changed from ${lastVersion} to ${versionInfo.last_updated}`);
+                        updateStatus(`Update detected! (${updateCount} total)`, 'success');
+                    } else if (lastVersion === null) {
+                        log(`📊 Initial version: ${versionInfo.last_updated}`);
+                        updateStatus('Polling started - monitoring for updates', 'info');
+                    } else {
+                        log(`✅ No updates (version: ${versionInfo.last_updated})`);
+                        updateStatus('Polling active - no updates detected', 'info');
+                    }
+                    
+                    lastVersion = versionInfo.last_updated;
+                    document.getElementById('lastUpdate').textContent = new Date(versionInfo.timestamp).toLocaleTimeString();
+                    
+                } else {
+                    log(`❌ API error: ${response.status}`);
+                    updateStatus(`API error: ${response.status}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Network error: ${error.message}`);
+                updateStatus(`Network error: ${error.message}`, 'error');
+            }
+            
+            updateMetrics();
+        }
+
+        function startPolling() {
+            if (pollingInterval) {
+                log('⚠️ Polling already active');
+                return;
+            }
+            
+            log('🚀 Starting real-time polling...');
+            updateStatus('Polling started', 'success');
+            
+            // Initial check
+            checkForUpdates();
+            
+            // Set up interval
+            pollingInterval = setInterval(checkForUpdates, POLL_INTERVAL);
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                log('⏹️ Polling stopped');
+                updateStatus('Polling stopped', 'warning');
+            } else {
+                log('⚠️ Polling not active');
+            }
+        }
+
+        async function createTestEvent() {
+            try {
+                log('📝 Creating test event...');
+                
+                const now = new Date();
+                const startTime = new Date(now.getTime() + 60000); // 1 minute from now
+                const endTime = new Date(startTime.getTime() + 3600000); // 1 hour duration
+                
+                const eventData = {
+                    title: `Test Event ${Date.now()}`,
+                    start_utc: startTime.toISOString(),
+                    end_utc: endTime.toISOString(),
+                    category: 'family',
+                    source: 'manual'
+                };
+                
+                const response = await fetch(`${API_BASE_URL}/events/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(eventData)
+                });
+                
+                if (response.ok) {
+                    const event = await response.json();
+                    log(`✅ Test event created: ${event.title} (ID: ${event.id})`);
+                    updateStatus('Test event created successfully', 'success');
+                } else {
+                    log(`❌ Failed to create event: ${response.status}`);
+                    updateStatus(`Failed to create event: ${response.status}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Error creating test event: ${error.message}`);
+                updateStatus(`Error creating test event: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = 'Log cleared...\n';
+        }
+
+        // Auto-start polling when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            log('🎯 Real-time updates test page loaded');
+            log('💡 Click "Start Polling" to begin monitoring for updates');
+            log('💡 Click "Create Test Event" to trigger an update');
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+        });
+    </script>
+</body>
+</html>
