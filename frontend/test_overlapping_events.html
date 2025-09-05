@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overlapping Events Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .event-list {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .event-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .event-item.family {
+            border-left-color: #e74c3c;
+        }
+        .event-item.after-school {
+            border-left-color: #f39c12;
+        }
+        .event-item.imported {
+            border-left-color: #9b59b6;
+        }
+        .event-item.manual {
+            border-left-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Overlapping Events Test</h1>
+        <p>This page tests the overlapping event functionality and other enhanced features.</p>
+
+        <div class="test-section">
+            <h3>Test Controls</h3>
+            <button onclick="createOverlappingEvents()">Create Overlapping Events</button>
+            <button onclick="createOutsideRangeEvents()">Create Outside Range Events</button>
+            <button onclick="createManyEvents()">Create Many Events (Performance Test)</button>
+            <button onclick="clearAllEvents()">Clear All Events</button>
+            <button onclick="openEnhancedWall()">Open Enhanced Wall Display</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Current Events</h3>
+            <div id="currentEvents" class="event-list">Loading events...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test Results</h3>
+            <div id="testResults"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/v1';
+
+        function showResult(message, type = 'info') {
+            const element = document.getElementById('testResults');
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function loadCurrentEvents() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/events/`);
+                if (response.ok) {
+                    const events = await response.json();
+                    displayEvents(events);
+                } else {
+                    showResult(`Failed to load events: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showResult(`Error loading events: ${error.message}`, 'error');
+            }
+        }
+
+        function displayEvents(events) {
+            const container = document.getElementById('currentEvents');
+            if (events.length === 0) {
+                container.innerHTML = 'No events found';
+                return;
+            }
+
+            const eventsHtml = events.map(event => {
+                const startTime = new Date(event.start_utc);
+                const endTime = new Date(event.end_utc);
+                return `
+                    <div class="event-item ${event.category}">
+                        <strong>${event.title}</strong><br>
+                        <small>${startTime.toLocaleString()} - ${endTime.toLocaleString()}</small><br>
+                        <small>Category: ${event.category} | Source: ${event.source}</small>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = eventsHtml;
+        }
+
+        async function createOverlappingEvents() {
+            try {
+                showResult('Creating overlapping events...', 'info');
+                
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                // Create 3 overlapping events on the same day
+                const events = [
+                    {
+                        title: 'Piano Lesson',
+                        start_utc: new Date(today.getTime() + 9 * 60 * 60 * 1000).toISOString(), // 9:00 AM
+                        end_utc: new Date(today.getTime() + 10 * 60 * 60 * 1000).toISOString(), // 10:00 AM
+                        category: 'after-school',
+                        source: 'manual'
+                    },
+                    {
+                        title: 'Math Tutoring',
+                        start_utc: new Date(today.getTime() + 9 * 60 * 60 * 1000 + 30 * 60 * 1000).toISOString(), // 9:30 AM
+                        end_utc: new Date(today.getTime() + 10 * 60 * 60 * 1000 + 30 * 60 * 1000).toISOString(), // 10:30 AM
+                        category: 'after-school',
+                        source: 'manual'
+                    },
+                    {
+                        title: 'Family Meeting',
+                        start_utc: new Date(today.getTime() + 9 * 60 * 60 * 1000 + 45 * 60 * 1000).toISOString(), // 9:45 AM
+                        end_utc: new Date(today.getTime() + 10 * 60 * 60 * 1000 + 15 * 60 * 1000).toISOString(), // 10:15 AM
+                        category: 'family',
+                        source: 'manual'
+                    }
+                ];
+
+                for (const eventData of events) {
+                    const response = await fetch(`${API_BASE_URL}/events/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(eventData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to create event: ${response.status}`);
+                    }
+                }
+
+                showResult('✅ Successfully created 3 overlapping events!', 'success');
+                loadCurrentEvents();
+                
+            } catch (error) {
+                showResult(`❌ Error creating overlapping events: ${error.message}`, 'error');
+            }
+        }
+
+        async function createOutsideRangeEvents() {
+            try {
+                showResult('Creating outside range events...', 'info');
+                
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                // Create events outside the default 8:00-22:00 range
+                const events = [
+                    {
+                        title: 'Early Morning Run',
+                        start_utc: new Date(today.getTime() + 6 * 60 * 60 * 1000).toISOString(), // 6:00 AM
+                        end_utc: new Date(today.getTime() + 7 * 60 * 60 * 1000).toISOString(), // 7:00 AM
+                        category: 'family',
+                        source: 'manual'
+                    },
+                    {
+                        title: 'Late Night Study',
+                        start_utc: new Date(today.getTime() + 22 * 60 * 60 * 1000).toISOString(), // 10:00 PM
+                        end_utc: new Date(today.getTime() + 23 * 60 * 60 * 1000).toISOString(), // 11:00 PM
+                        category: 'after-school',
+                        source: 'manual'
+                    }
+                ];
+
+                for (const eventData of events) {
+                    const response = await fetch(`${API_BASE_URL}/events/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(eventData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to create event: ${response.status}`);
+                    }
+                }
+
+                showResult('✅ Successfully created 2 outside range events!', 'success');
+                loadCurrentEvents();
+                
+            } catch (error) {
+                showResult(`❌ Error creating outside range events: ${error.message}`, 'error');
+            }
+        }
+
+        async function createManyEvents() {
+            try {
+                showResult('Creating many events for performance test...', 'info');
+                
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                
+                // Create 20 events across the week
+                const events = [];
+                for (let i = 0; i < 20; i++) {
+                    const dayOffset = Math.floor(i / 3); // 3 events per day
+                    const hourOffset = 8 + (i % 3) * 2; // 8, 10, 12, 14, 16, 18, 20
+                    
+                    events.push({
+                        title: `Test Event ${i + 1}`,
+                        start_utc: new Date(today.getTime() + dayOffset * 24 * 60 * 60 * 1000 + hourOffset * 60 * 60 * 1000).toISOString(),
+                        end_utc: new Date(today.getTime() + dayOffset * 24 * 60 * 60 * 1000 + (hourOffset + 1) * 60 * 60 * 1000).toISOString(),
+                        category: i % 2 === 0 ? 'family' : 'after-school',
+                        source: 'manual'
+                    });
+                }
+
+                let successCount = 0;
+                for (const eventData of events) {
+                    const response = await fetch(`${API_BASE_URL}/events/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(eventData)
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    }
+                }
+
+                showResult(`✅ Successfully created ${successCount}/20 events for performance test!`, 'success');
+                loadCurrentEvents();
+                
+            } catch (error) {
+                showResult(`❌ Error creating many events: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearAllEvents() {
+            try {
+                showResult('Clearing all events...', 'info');
+                
+                // Get all events
+                const response = await fetch(`${API_BASE_URL}/events/`);
+                if (!response.ok) {
+                    throw new Error('Failed to load events');
+                }
+                
+                const events = await response.json();
+                let deletedCount = 0;
+                
+                // Delete each event
+                for (const event of events) {
+                    const deleteResponse = await fetch(`${API_BASE_URL}/events/${event.id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (deleteResponse.ok) {
+                        deletedCount++;
+                    }
+                }
+                
+                showResult(`✅ Successfully deleted ${deletedCount} events!`, 'success');
+                loadCurrentEvents();
+                
+            } catch (error) {
+                showResult(`❌ Error clearing events: ${error.message}`, 'error');
+            }
+        }
+
+        function openEnhancedWall() {
+            try {
+                const wallWindow = window.open('wall_enhanced.html', '_blank', 'width=1400,height=900');
+                if (wallWindow) {
+                    showResult('✅ Enhanced wall display opened in new window', 'success');
+                } else {
+                    showResult('❌ Failed to open enhanced wall display (popup blocked?)', 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Error opening enhanced wall display: ${error.message}`, 'error');
+            }
+        }
+
+        // Load events on page load
+        window.addEventListener('DOMContentLoaded', loadCurrentEvents);
+    </script>
+</body>
+</html>
