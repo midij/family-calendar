@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .test-results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .connection-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .connection-indicator.online {
+            background: #27ae60;
+        }
+        .connection-indicator.offline {
+            background: #e74c3c;
+        }
+        .connection-indicator.retrying {
+            background: #f39c12;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .metric {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Real-time Integration Test</h1>
+        <p>Comprehensive testing of Task 10: Real-time Frontend Integration</p>
+
+        <div class="test-section">
+            <h3>Connection Status</h3>
+            <div id="connectionStatus">
+                <span class="connection-indicator offline" id="statusIndicator"></span>
+                <span id="statusText">Testing...</span>
+            </div>
+            <div id="lastUpdated">Last updated: Never</div>
+        </div>
+
+        <div class="test-section">
+            <h3>Performance Metrics</h3>
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-value" id="pollingCount">0</div>
+                    <div class="metric-label">Polling Attempts</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="successCount">0</div>
+                    <div class="metric-label">Successful Updates</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="errorCount">0</div>
+                    <div class="metric-label">Errors</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="retryCount">0</div>
+                    <div class="metric-label">Retry Attempts</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test Controls</h3>
+            <button onclick="startTest()">Start Real-time Test</button>
+            <button onclick="stopTest()">Stop Test</button>
+            <button onclick="simulateOffline()">Simulate Offline</button>
+            <button onclick="simulateOnline()">Simulate Online</button>
+            <button onclick="clearResults()">Clear Results</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Test Results</h3>
+            <div class="test-results" id="testResults">Ready to start testing...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>Wall Display Links</h3>
+            <button onclick="openWallDisplay()">Open Basic Wall Display</button>
+            <button onclick="openEnhancedWallDisplay()">Open Enhanced Wall Display</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/v1';
+        const REFRESH_INTERVAL = 5000; // 5 seconds for testing
+        const MAX_RETRY_ATTEMPTS = 3;
+        const RETRY_DELAY_BASE = 1000;
+        const MAX_RETRY_DELAY = 30000;
+
+        // Test state
+        let testRunning = false;
+        let testTimer = null;
+        let metrics = {
+            pollingCount: 0,
+            successCount: 0,
+            errorCount: 0,
+            retryCount: 0
+        };
+        let lastVersion = null;
+        let retryAttempts = 0;
+        let cachedData = {
+            events: [],
+            timestamp: null
+        };
+
+        function log(message, type = 'info') {
+            const results = document.getElementById('testResults');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            results.textContent += logEntry;
+            results.scrollTop = results.scrollHeight;
+            
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function updateMetrics() {
+            document.getElementById('pollingCount').textContent = metrics.pollingCount;
+            document.getElementById('successCount').textContent = metrics.successCount;
+            document.getElementById('errorCount').textContent = metrics.errorCount;
+            document.getElementById('retryCount').textContent = metrics.retryCount;
+        }
+
+        function setConnectionStatus(online, retrying = false) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            indicator.className = 'connection-indicator';
+            
+            if (online) {
+                indicator.classList.add('online');
+                statusText.textContent = 'Connected';
+            } else if (retrying) {
+                indicator.classList.add('retrying');
+                statusText.textContent = `Retrying (${retryAttempts})`;
+            } else {
+                indicator.classList.add('offline');
+                statusText.textContent = 'Offline';
+            }
+        }
+
+        function showCacheIndicator() {
+            const statusText = document.getElementById('statusText');
+            if (cachedData.timestamp) {
+                const cacheTime = new Date(cachedData.timestamp);
+                statusText.textContent = `Cached (${cacheTime.toLocaleTimeString()})`;
+            } else {
+                statusText.textContent = 'No Data';
+            }
+        }
+
+        function updateLastUpdated(timestamp) {
+            const lastUpdated = document.getElementById('lastUpdated');
+            const date = new Date(timestamp);
+            lastUpdated.textContent = `Last updated: ${date.toLocaleTimeString()}`;
+        }
+
+        async function fetchWithRetry(url, dataType, attempt = 1) {
+            try {
+                metrics.pollingCount++;
+                updateMetrics();
+                
+                const response = await fetch(url, {
+                    timeout: 5000
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (dataType === 'events') {
+                    cachedData.events = data;
+                }
+                
+                cachedData.timestamp = new Date().toISOString();
+                retryAttempts = 0;
+                metrics.successCount++;
+                updateMetrics();
+                
+                log(`Successfully loaded ${dataType} (${data.length} items)`, 'success');
+                return data;
+                
+            } catch (error) {
+                metrics.errorCount++;
+                updateMetrics();
+                log(`Error loading ${dataType} (attempt ${attempt}): ${error.message}`, 'error');
+                
+                if (attempt < MAX_RETRY_ATTEMPTS) {
+                    const delay = Math.min(
+                        RETRY_DELAY_BASE * Math.pow(2, attempt - 1),
+                        MAX_RETRY_DELAY
+                    );
+                    
+                    metrics.retryCount++;
+                    updateMetrics();
+                    retryAttempts = attempt;
+                    setConnectionStatus(false, true);
+                    
+                    log(`Retrying in ${delay}ms...`, 'warning');
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return await fetchWithRetry(url, dataType, attempt + 1);
+                } else {
+                    log(`Max retries reached for ${dataType}, using cached data`, 'error');
+                    if (dataType === 'events' && cachedData.events.length > 0) {
+                        showCacheIndicator();
+                    }
+                    retryAttempts = attempt;
+                    throw error;
+                }
+            }
+        }
+
+        async function checkForUpdates() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/events/version`, {
+                    timeout: 3000
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Version check failed: ${response.status}`);
+                }
+                
+                const versionInfo = await response.json();
+                
+                if (lastVersion && versionInfo.last_updated !== lastVersion) {
+                    log('Updates detected, refreshing events...', 'info');
+                    await fetchWithRetry(`${API_BASE_URL}/events/`, 'events');
+                }
+                
+                lastVersion = versionInfo.last_updated;
+                updateLastUpdated(versionInfo.timestamp);
+                setConnectionStatus(true);
+                retryAttempts = 0;
+                
+            } catch (error) {
+                log(`Error checking for updates: ${error.message}`, 'error');
+                setConnectionStatus(false);
+                retryAttempts++;
+                
+                if (retryAttempts >= 3) {
+                    showCacheIndicator();
+                }
+            }
+        }
+
+        function startTest() {
+            if (testRunning) return;
+            
+            testRunning = true;
+            log('Starting real-time integration test...', 'info');
+            log(`Polling interval: ${REFRESH_INTERVAL}ms`, 'info');
+            log(`Max retry attempts: ${MAX_RETRY_ATTEMPTS}`, 'info');
+            
+            // Start polling
+            testTimer = setInterval(checkForUpdates, REFRESH_INTERVAL);
+            
+            // Initial check
+            checkForUpdates();
+        }
+
+        function stopTest() {
+            if (!testRunning) return;
+            
+            testRunning = false;
+            if (testTimer) {
+                clearInterval(testTimer);
+                testTimer = null;
+            }
+            
+            log('Test stopped', 'info');
+            log(`Final metrics: ${JSON.stringify(metrics)}`, 'info');
+        }
+
+        function simulateOffline() {
+            log('Simulating offline state...', 'warning');
+            setConnectionStatus(false);
+            showCacheIndicator();
+        }
+
+        function simulateOnline() {
+            log('Simulating online state...', 'info');
+            setConnectionStatus(true);
+            retryAttempts = 0;
+            checkForUpdates();
+        }
+
+        function clearResults() {
+            document.getElementById('testResults').textContent = 'Results cleared...\n';
+            metrics = {
+                pollingCount: 0,
+                successCount: 0,
+                errorCount: 0,
+                retryCount: 0
+            };
+            updateMetrics();
+        }
+
+        function openWallDisplay() {
+            window.open('wall.html', '_blank', 'width=1400,height=900');
+        }
+
+        function openEnhancedWallDisplay() {
+            window.open('wall_enhanced.html', '_blank', 'width=1400,height=900');
+        }
+
+        // Handle online/offline events
+        window.addEventListener('online', () => {
+            log('Network connection restored', 'success');
+            setConnectionStatus(true);
+            retryAttempts = 0;
+            if (testRunning) {
+                checkForUpdates();
+            }
+        });
+
+        window.addEventListener('offline', () => {
+            log('Network connection lost', 'error');
+            setConnectionStatus(false);
+            showCacheIndicator();
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Real-time integration test ready', 'info');
+            updateMetrics();
+        });
+    </script>
+</body>
+</html>

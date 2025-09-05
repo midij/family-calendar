@@ -334,6 +334,17 @@
             background: #e74c3c;
         }
 
+        .status-indicator.retrying {
+            background: #f39c12;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
         .last-updated {
             color: #7f8c8d;
         }
@@ -626,6 +637,9 @@
         // Configuration
         const API_BASE_URL = 'http://localhost:8000/v1';
         const REFRESH_INTERVAL = 10000; // 10 seconds
+        const MAX_RETRY_ATTEMPTS = 3;
+        const RETRY_DELAY_BASE = 1000; // 1 second base delay
+        const MAX_RETRY_DELAY = 30000; // 30 seconds max delay
         const TIME_START = 6; // 6:00 AM (expanded range)
         const TIME_END = 24; // 12:00 AM (expanded range)
         const TIME_SLOT_HEIGHT = 40; // pixels per hour
@@ -639,6 +653,13 @@
         let refreshTimer = null;
         let isOnline = true;
         let timeRangeExpanded = false;
+        let retryAttempts = 0;
+        let lastSuccessfulUpdate = null;
+        let cachedData = {
+            kids: [],
+            events: [],
+            timestamp: null
+        };
 
         // Initialize the application
         async function init() {
@@ -654,37 +675,87 @@
             }
         }
 
-        // Load kids data
+        // Load kids data with retry logic
         async function loadKids() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/kids/`);
-                if (!response.ok) throw new Error('Failed to load kids');
-                kids = await response.json();
-                console.log('Loaded kids:', kids);
-            } catch (error) {
-                console.error('Error loading kids:', error);
-                kids = [];
-            }
+            return await fetchWithRetry(`${API_BASE_URL}/kids/`, 'kids');
         }
 
-        // Load events data
+        // Load events data with retry logic
         async function loadEvents() {
+            return await fetchWithRetry(`${API_BASE_URL}/events/`, 'events');
+        }
+
+        // Generic fetch function with retry logic and exponential backoff
+        async function fetchWithRetry(url, dataType, attempt = 1) {
             try {
-                const response = await fetch(`${API_BASE_URL}/events/`);
-                if (!response.ok) throw new Error('Failed to load events');
-                events = await response.json();
-                console.log('Loaded events:', events);
+                const response = await fetch(url, {
+                    timeout: 5000 // 5 second timeout
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update global state
+                if (dataType === 'kids') {
+                    kids = data;
+                    cachedData.kids = data;
+                } else if (dataType === 'events') {
+                    events = data;
+                    cachedData.events = data;
+                }
+                
+                // Update cache timestamp
+                cachedData.timestamp = new Date().toISOString();
+                lastSuccessfulUpdate = new Date();
+                
+                // Reset retry attempts on success
+                retryAttempts = 0;
+                
+                console.log(`Loaded ${dataType}:`, data);
+                return data;
+                
             } catch (error) {
-                console.error('Error loading events:', error);
-                events = [];
+                console.error(`Error loading ${dataType} (attempt ${attempt}):`, error);
+                
+                if (attempt < MAX_RETRY_ATTEMPTS) {
+                    const delay = Math.min(
+                        RETRY_DELAY_BASE * Math.pow(2, attempt - 1),
+                        MAX_RETRY_DELAY
+                    );
+                    
+                    console.log(`Retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return await fetchWithRetry(url, dataType, attempt + 1);
+                } else {
+                    // Max retries reached, use cached data if available
+                    console.warn(`Max retries reached for ${dataType}, using cached data`);
+                    if (dataType === 'kids' && cachedData.kids.length > 0) {
+                        kids = cachedData.kids;
+                        showCacheIndicator();
+                    } else if (dataType === 'events' && cachedData.events.length > 0) {
+                        events = cachedData.events;
+                        showCacheIndicator();
+                    }
+                    retryAttempts = attempt;
+                    throw error;
+                }
             }
         }
 
-        // Check for updates using version endpoint
+        // Check for updates using version endpoint with retry logic
         async function checkForUpdates() {
             try {
-                const response = await fetch(`${API_BASE_URL}/events/version`);
-                if (!response.ok) throw new Error('Failed to check version');
+                const response = await fetch(`${API_BASE_URL}/events/version`, {
+                    timeout: 3000 // 3 second timeout for version check
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Version check failed: ${response.status}`);
+                }
+                
                 const versionInfo = await response.json();
                 
                 if (lastVersion && versionInfo.last_updated !== lastVersion) {
@@ -697,9 +768,21 @@
                 lastVersion = versionInfo.last_updated;
                 updateLastUpdated(versionInfo.timestamp);
                 setConnectionStatus(true);
+                
+                // Reset retry attempts on successful version check
+                retryAttempts = 0;
+                
             } catch (error) {
                 console.error('Error checking for updates:', error);
                 setConnectionStatus(false);
+                
+                // Increment retry attempts
+                retryAttempts++;
+                
+                // If we've failed multiple times, show cache indicator
+                if (retryAttempts >= 3) {
+                    showCacheIndicator();
+                }
             }
         }
 
@@ -1041,11 +1124,26 @@
             const status = document.getElementById('connectionStatus');
             
             if (online) {
-                indicator.classList.remove('offline');
+                indicator.classList.remove('offline', 'retrying');
                 status.textContent = 'Connected';
             } else {
                 indicator.classList.add('offline');
-                status.textContent = 'Offline';
+                if (retryAttempts > 0) {
+                    status.textContent = `Retrying (${retryAttempts})`;
+                    indicator.classList.add('retrying');
+                } else {
+                    status.textContent = 'Offline';
+                }
+            }
+        }
+
+        function showCacheIndicator() {
+            const status = document.getElementById('connectionStatus');
+            if (cachedData.timestamp) {
+                const cacheTime = new Date(cachedData.timestamp);
+                status.textContent = `Cached (${cacheTime.toLocaleTimeString()})`;
+            } else {
+                status.textContent = 'No Data';
             }
         }
 
@@ -1079,12 +1177,16 @@
 
         // Handle online/offline events
         window.addEventListener('online', () => {
+            console.log('Network connection restored');
             setConnectionStatus(true);
+            retryAttempts = 0; // Reset retry attempts
             checkForUpdates();
         });
 
         window.addEventListener('offline', () => {
+            console.log('Network connection lost');
             setConnectionStatus(false);
+            showCacheIndicator();
         });
 
         // Close modal when clicking outside
