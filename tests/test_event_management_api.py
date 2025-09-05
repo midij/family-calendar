@@ -164,7 +164,7 @@ class TestEventManagementAPI:
         }
         
         create_response = client.post("/v1/events/", json=new_event_data)
-        assert create_response.status_code == 200
+        assert create_response.status_code == 201
         new_event_id = create_response.json()["id"]
         
         # Second request with same idempotency key but different event
@@ -201,7 +201,7 @@ class TestEventManagementAPI:
         }
         
         create_response = client.post("/v1/events/", json=new_event_data)
-        assert create_response.status_code == 200
+        assert create_response.status_code == 201
         new_event_id = create_response.json()["id"]
         
         # Second delete with different key

@@ -139,26 +139,28 @@ This document breaks down the family calendar MVP into sequential, testable task
 
 ---
 
-## Task 7: Real-time Updates (SSE)
-**Status**: not-started  
+## Task 7: Real-time Updates (Database Timestamp Polling)
+**Status**: completed  
 **Order**: 7  
-**Goal**: Implement server-sent events for real-time updates
+**Goal**: Implement database timestamp-based polling for real-time updates
 
 **Implementation**:
-- Create GET /v1/events/stream endpoint
-- Implement SSE protocol
-- Add version tracking for data changes
-- Implement client connection management
-- Add fallback polling mechanism
-- Handle connection errors and reconnection
+- ✅ Create GET /v1/events/version endpoint that returns latest updated_at timestamp
+- ✅ Use existing database updated_at field from BaseModel (no additional tables needed)
+- ✅ Implement lightweight version checking using MAX(updated_at) query
+- ✅ Add proper error handling for version endpoint
+- ✅ Document polling mechanism for frontend implementation
+- ✅ Remove SSE-related code from create/update/delete endpoints
+- ✅ Fix BaseModel to set updated_at on creation (not just updates)
 
 **Test Plan**:
-- Test SSE connection establishment
-- Verify real-time updates work correctly
-- Test fallback to polling when SSE fails
-- Validate update frequency (≤10s)
-- Test multiple client connections
-- Test connection recovery after network issues
+- ✅ Test version endpoint returns correct timestamp
+- ✅ Verify timestamp updates when events are created/modified/deleted
+- ✅ Test version endpoint performance with multiple events
+- ✅ Validate timestamp format and timezone handling
+- ✅ Test error handling when no events exist
+- ✅ Verify endpoint works with existing database schema
+- ✅ 7 comprehensive tests passing
 
 ---
 

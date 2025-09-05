@@ -43,7 +43,7 @@ class TestKidsAPI:
     def test_create_kid(self, client, sample_kid_data):
         """Test creating a new kid"""
         response = client.post("/v1/kids/", json=sample_kid_data)
-        assert response.status_code == 200
+        assert response.status_code == 201
         
         data = response.json()
         assert data["name"] == sample_kid_data["name"]

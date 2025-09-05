@@ -44,7 +44,7 @@ class TestEventsAPI:
     def test_create_event(self, client, sample_event_api_data):
         """Test creating a new event"""
         response = client.post("/v1/events/", json=sample_event_api_data)
-        assert response.status_code == 200
+        assert response.status_code == 201
         
         data = response.json()
         assert data["title"] == sample_event_api_data["title"]
@@ -265,7 +265,7 @@ class TestEventsAPI:
         
         # Create event
         response = client.post("/v1/events/", json=event_data)
-        assert response.status_code == 200
+        assert response.status_code == 201
         
         created_event = response.json()
         assert created_event["kid_ids"] == ["1", "2", "3"]

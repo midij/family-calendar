@@ -4,6 +4,7 @@ from typing import List
 from app.database import get_db
 from app.schemas.kid import Kid, KidCreate
 from app.models.kid import Kid as KidModel
+# Removed SSE and VersionService imports - using database timestamp approach
 
 router = APIRouter()
 
@@ -21,21 +22,24 @@ def get_kid(kid_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Kid not found")
     return kid
 
-@router.post("/", response_model=Kid)
-def create_kid(kid: KidCreate, db: Session = Depends(get_db)):
+@router.post("/", response_model=Kid, status_code=201)
+async def create_kid(kid: KidCreate, db: Session = Depends(get_db)):
     """Create a new kid"""
     try:
         db_kid = KidModel(**kid.model_dump())
         db.add(db_kid)
         db.commit()
         db.refresh(db_kid)
+        
+        # Database timestamp will be automatically updated by SQLAlchemy
+        
         return db_kid
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to create kid: {str(e)}")
 
 @router.delete("/{kid_id}")
-def delete_kid(kid_id: int, db: Session = Depends(get_db)):
+async def delete_kid(kid_id: int, db: Session = Depends(get_db)):
     """Delete a kid"""
     db_kid = db.query(KidModel).filter(KidModel.id == kid_id).first()
     if not db_kid:
@@ -44,6 +48,9 @@ def delete_kid(kid_id: int, db: Session = Depends(get_db)):
     try:
         db.delete(db_kid)
         db.commit()
+        
+        # Database timestamp will be automatically updated by SQLAlchemy
+        
         return {"message": "Kid deleted successfully"}
     except Exception as e:
         db.rollback()

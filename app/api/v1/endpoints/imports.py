@@ -12,6 +12,8 @@ from app.database import get_db
 from app.models.event import Event as EventModel
 from app.schemas.event import EventCreate
 from app.services.import_service import ImportService
+from app.services.version_service import VersionService
+from app.services.sse_service import SSEService
 
 router = APIRouter()
 
@@ -54,6 +56,11 @@ async def import_csv_events(
             db=db
         )
         
+        # Update version and broadcast to SSE clients if any events were imported
+        if result["success_count"] > 0:
+            version_info = VersionService.update_version(db)
+            await SSEService.broadcast_update(version_info)
+        
         return {
             "message": "CSV import completed",
             "total_rows": result["total_rows"],
@@ -95,6 +102,11 @@ async def import_ics_events(
             default_source=source,
             db=db
         )
+        
+        # Update version and broadcast to SSE clients if any events were imported
+        if result["success_count"] > 0:
+            version_info = VersionService.update_version(db)
+            await SSEService.broadcast_update(version_info)
         
         return {
             "message": "ICS import completed",

@@ -62,7 +62,7 @@ class TestAPISimple:
         }
         
         response = requests.post("http://127.0.0.1:8001/v1/kids/", json=kid_data)
-        assert response.status_code == 200
+        assert response.status_code == 201
         
         data = response.json()
         assert data["name"] == kid_data["name"]
@@ -83,7 +83,7 @@ class TestAPISimple:
         }
         
         response = requests.post("http://127.0.0.1:8001/v1/events/", json=event_data)
-        assert response.status_code == 200
+        assert response.status_code == 201
         
         data = response.json()
         assert data["title"] == event_data["title"]

@@ -127,7 +127,7 @@ class TestRRuleService:
         # Invalid RRULE
         is_valid, error = RRuleService.validate_rrule("INVALID=RULE")
         assert is_valid is False
-        assert "INVALID" in error
+        assert "Invalid RRULE format" in error
         
         # Empty RRULE
         is_valid, error = RRuleService.validate_rrule("")

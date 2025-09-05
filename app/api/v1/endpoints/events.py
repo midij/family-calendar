@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from fastapi import APIRouter, Depends, HTTPException, Query, Header, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ from app.schemas.event import Event, EventCreate, EventUpdate
 from app.models.event import Event as EventModel
 from app.services.event_expansion_service import EventExpansionService
 from app.services.rrule_service import RRuleService
+# Removed SSE and VersionService imports - using database timestamp approach
 
 router = APIRouter()
 
@@ -52,6 +54,21 @@ def get_events(
         events = query.all()
         return events
 
+# Removed SSE stream endpoint - using database timestamp polling instead
+
+@router.get("/version")
+def get_version_info(db: Session = Depends(get_db)):
+    """Get current version information for polling fallback"""
+    from sqlalchemy import func
+    
+    # Get the latest updated_at timestamp from events table
+    latest_updated = db.query(func.max(EventModel.updated_at)).scalar()
+    
+    return {
+        "last_updated": latest_updated.isoformat() if latest_updated else None,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
 @router.get("/{event_id}", response_model=Event)
 def get_event(event_id: int, db: Session = Depends(get_db)):
     """Get a specific event by ID"""
@@ -60,8 +77,8 @@ def get_event(event_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Event not found")
     return event
 
-@router.post("/", response_model=Event)
-def create_event(event: EventCreate, db: Session = Depends(get_db)):
+@router.post("/", response_model=Event, status_code=201)
+async def create_event(event: EventCreate, db: Session = Depends(get_db)):
     """Create a new event"""
     try:
         # Create the event directly - SQLAlchemy will handle JSON serialization
@@ -69,13 +86,15 @@ def create_event(event: EventCreate, db: Session = Depends(get_db)):
         db.add(db_event)
         db.commit()
         db.refresh(db_event)
+        
+        # Database timestamp will be automatically updated by SQLAlchemy
         return db_event
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to create event: {str(e)}")
 
 @router.patch("/{event_id}", response_model=Event)
-def update_event(
+async def update_event(
     event_id: int, 
     event_update: EventUpdate, 
     db: Session = Depends(get_db),
@@ -123,13 +142,14 @@ def update_event(
                 idempotency_key, "update", event_id, db_event
             )
         
+        # Database timestamp will be automatically updated by SQLAlchemy
         return db_event
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to update event: {str(e)}")
 
 @router.delete("/{event_id}")
-def delete_event(
+async def delete_event(
     event_id: int, 
     db: Session = Depends(get_db),
     idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key")
@@ -170,6 +190,7 @@ def delete_event(
                 idempotency_key, "delete", event_id, result
             )
         
+        # Database timestamp will be automatically updated by SQLAlchemy
         return result
     except Exception as e:
         db.rollback()
