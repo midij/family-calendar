@@ -912,7 +912,7 @@
             const endUtc = new Date(endLocal.getTime() - (endLocal.getTimezoneOffset() * 60000)).toISOString();
             
             const selectedKids = Array.from(document.getElementById('eventKids').selectedOptions)
-                .map(option => parseInt(option.value));
+                .map(option => option.value);
             
             const formData = {
                 title: document.getElementById('eventTitle').value.trim(),
@@ -1003,7 +1003,7 @@
             // Select kids
             const kidsSelect = document.getElementById('eventKids');
             Array.from(kidsSelect.options).forEach(option => {
-                option.selected = event.kid_ids && event.kid_ids.includes(parseInt(option.value));
+                option.selected = event.kid_ids && event.kid_ids.includes(option.value);
             });
             
             editingEventId = eventId;
