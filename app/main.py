@@ -11,13 +11,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add security headers middleware
+# Add security headers and cache-busting middleware
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
+    
+    # Add cache-busting headers for HTML files
+    if request.url.path.endswith('.html'):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    
     return response
 
 # Add CORS middleware

@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Family Calendar - Wall Display</title>
+    <!-- Cache buster: v4 - 2025-09-05 17:51 -->
+    <script>
+        // Force cache invalidation
+        console.log('=== CACHE BUSTER v4 - 2025-09-05 17:51 ===');
+    </script>
     <!-- Updated: Enhanced version with all features -->
     <style>
         * {
@@ -813,6 +818,8 @@
         async function init() {
             try {
                 console.log('Initializing Enhanced Family Calendar...');
+                console.log('Current week start before loading:', currentWeekStart);
+                
                 console.log('Loading kids...');
                 await loadKids();
                 console.log('Kids loaded:', kids);
@@ -828,9 +835,26 @@
                 setupEventPolling();
                 
                 console.log('Updating display...');
+                console.log('Current date:', new Date());
+                console.log('Current week start:', currentWeekStart);
+                console.log('Current week start local:', currentWeekStart.toLocaleDateString());
                 updateDisplay();
                 
                 console.log('Enhanced initialization complete!');
+                
+                // Debug: Check day column contents
+                console.log('=== DEBUG: Day Column Contents ===');
+                for (let i = 0; i < 7; i++) {
+                    const dayCol = document.getElementById(`dayColumn${i}`);
+                    if (dayCol) {
+                        const slots = dayCol.querySelectorAll('.child-track-slot');
+                        console.log(`dayColumn${i}: ${slots.length} slots`);
+                        if (slots.length > 0) {
+                            const firstSlot = slots[0];
+                            console.log(`  First slot: data-day=${firstSlot.dataset.day}, data-hour=${firstSlot.dataset.hour}`);
+                        }
+                    }
+                }
             } catch (error) {
                 console.error('Failed to initialize:', error);
                 showError('Failed to load calendar data: ' + error.message);
@@ -888,7 +912,11 @@
         // Load events data with retry logic
         async function loadEvents() {
             if (!currentWeekStart) {
+                console.log('Setting currentWeekStart for the first time');
                 currentWeekStart = getWeekStart(new Date());
+                console.log('currentWeekStart set to:', currentWeekStart);
+            } else {
+                console.log('Using existing currentWeekStart:', currentWeekStart);
             }
             
             const weekEnd = new Date(currentWeekStart);
@@ -904,8 +932,12 @@
         // Generic fetch function with retry logic and exponential backoff
         async function fetchWithRetry(url, dataType, attempt = 1) {
             try {
+                console.log(`Fetching ${dataType} from ${url} (attempt ${attempt})`);
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                const timeoutId = setTimeout(() => {
+                    console.log(`Timeout for ${url}`);
+                    controller.abort();
+                }, 10000); // 10 second timeout
                 
                 const response = await fetch(url, {
                     signal: controller.signal
@@ -918,6 +950,7 @@
                 }
                 
                 const data = await response.json();
+                console.log(`Successfully fetched ${dataType}:`, data);
                 
                 // Update global state
                 if (dataType === 'kids') {
@@ -1074,8 +1107,11 @@
 
         // Update week headers
         function updateWeekHeaders() {
+            console.log('updateWeekHeaders called, currentWeekStart:', currentWeekStart);
             if (!currentWeekStart) {
+                console.log('currentWeekStart is null, calling getWeekStart');
                 currentWeekStart = getWeekStart(new Date());
+                console.log('currentWeekStart set to:', currentWeekStart);
             }
 
             const weekEnd = new Date(currentWeekStart);
@@ -1097,6 +1133,8 @@
                 dayName.textContent = dayDate.toLocaleDateString('en-US', { weekday: 'short' });
                 dayNumber.textContent = dayDate.getDate();
                 
+                console.log(`Day ${day}: ${dayDate.toLocaleDateString()} (${dayName.textContent})`);
+                
                 // Highlight today
                 const today = new Date();
                 if (isSameDay(dayDate, today)) {
@@ -1112,6 +1150,7 @@
             console.log('Enhanced rendering events...');
             console.log('Total events:', events.length);
             console.log('Current week start:', currentWeekStart);
+            console.log('All events:', events.map(e => ({title: e.title, start: e.start_utc, kids: e.kid_ids})));
             
             // Clear existing events
             document.querySelectorAll('.event-card').forEach(card => card.remove());
@@ -1121,6 +1160,7 @@
                 const eventDate = new Date(event.start_utc);
                 const inWeek = isDateInWeek(eventDate, currentWeekStart);
                 console.log(`Event "${event.title}" on ${eventDate.toISOString()} in week:`, inWeek);
+                console.log(`  Event date: ${eventDate.toLocaleDateString()}, Week start: ${currentWeekStart.toLocaleDateString()}`);
                 return inWeek;
             });
 
@@ -1188,14 +1228,23 @@
 
         // Enhanced event rendering
         function renderEvent(event, isOverlapping = false, overlapIndex = 0) {
+            console.log(`=== RENDER EVENT CALLED: "${event.title}" ===`);
             const eventDate = new Date(event.start_utc);
             const dayIndex = getDayIndex(eventDate, currentWeekStart);
             
-            if (dayIndex < 0 || dayIndex > 6) return;
+            console.log(`renderEvent: "${event.title}" - dayIndex: ${dayIndex}, eventDate: ${eventDate.toLocaleDateString()}`);
+            console.log(`  Event details: start=${event.start_utc}, kids=${event.kid_ids}`);
+            
+            if (dayIndex < 0 || dayIndex > 6) {
+                console.log(`  REJECTED: dayIndex ${dayIndex} is out of range (0-6)`);
+                return;
+            }
 
             // Convert UTC times to local time for positioning
             const startTime = eventDate.getHours() + eventDate.getMinutes() / 60;
             const endTime = new Date(event.end_utc).getHours() + new Date(event.end_utc).getMinutes() / 60;
+            
+            console.log(`Event "${event.title}": startTime=${startTime}, Math.floor(startTime)=${Math.floor(startTime)}`);
 
             // Check if event is outside normal business hours (8:00-22:00) for styling
             const isOutsideRange = startTime < 8 || endTime > 22;
@@ -1204,15 +1253,55 @@
             let targetTrack = null;
             if (event.kid_ids && event.kid_ids.length > 0) {
                 const kidId = event.kid_ids[0]; // Use first kid ID
-                targetTrack = document.querySelector(`[data-kid-id="${kidId}"]`);
+                const targetHour = Math.floor(startTime);
+                
+                console.log(`  Looking for kid track with ID: ${kidId} (type: ${typeof kidId}) in day ${dayIndex} at hour ${targetHour}`);
+                
+                // Find the specific slot for this kid, day, and hour
+                const dayColumn = document.getElementById(`dayColumn${dayIndex}`);
+                if (dayColumn) {
+                    const slots = dayColumn.querySelectorAll('.child-track-slot');
+                    
+                    for (let slot of slots) {
+                        if (parseInt(slot.dataset.kidId) === kidId && 
+                            parseInt(slot.dataset.day) === dayIndex && 
+                            parseInt(slot.dataset.hour) === targetHour) {
+                            targetTrack = slot;
+                            break;
+                        }
+                    }
+                }
+                
+                console.log(`  Found targetTrack:`, targetTrack);
             }
 
-            // If no specific kid track, use the first track
+            // If no specific kid track, use the first track for this day and hour
             if (!targetTrack) {
-                targetTrack = document.querySelector(`#dayColumn${dayIndex} .child-track-slot[data-hour="${Math.floor(startTime)}"]`);
+                const dayColumn = document.getElementById(`dayColumn${dayIndex}`);
+                const targetHour = Math.floor(startTime);
+                
+                console.log(`Looking for any targetTrack in dayColumn${dayIndex} with hour ${targetHour}`);
+                
+                if (dayColumn) {
+                    // Find the first slot with the target hour in this specific day column
+                    const slots = dayColumn.querySelectorAll('.child-track-slot');
+                    
+                    for (let slot of slots) {
+                        if (parseInt(slot.dataset.day) === dayIndex && 
+                            parseInt(slot.dataset.hour) === targetHour) {
+                            targetTrack = slot;
+                            break;
+                        }
+                    }
+                    
+                    console.log(`Found targetTrack:`, targetTrack);
+                }
             }
 
-            if (!targetTrack) return;
+            if (!targetTrack) {
+                console.log(`  REJECTED: No target track found for event "${event.title}"`);
+                return;
+            }
 
             // Create event card
             const eventCard = document.createElement('div');
@@ -1314,17 +1403,20 @@
             eventCard.style.top = `${topOffset}px`;
             eventCard.style.height = `${height}px`;
             eventCard.style.zIndex = isOverlapping ? (15 + overlapIndex) : 10;
+            
+            console.log(`  Event "${event.title}" positioned: top=${topOffset}px, height=${height}px, zIndex=${eventCard.style.zIndex}`);
 
             // Add click handler
             eventCard.onclick = () => {
                 showEventModal(event);
             };
 
-            // Find the parent track container
-            const trackContainer = targetTrack.closest('.child-track');
-            if (trackContainer) {
-                trackContainer.appendChild(eventCard);
-            }
+            // Append directly to the targetTrack (time-slot)
+            console.log(`targetTrack:`, targetTrack);
+            console.log(`Appending event "${event.title}" to targetTrack`);
+            console.log(`Event card content:`, eventCard.outerHTML);
+            targetTrack.appendChild(eventCard);
+            console.log(`Event "${event.title}" successfully appended to DOM`);
         }
 
         // Show event modal
@@ -1383,6 +1475,7 @@
             const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
             weekStart.setDate(diff);
             weekStart.setHours(0, 0, 0, 0);
+            console.log(`getWeekStart: input date ${date.toLocaleDateString()}, day ${day}, calculated week start: ${weekStart.toLocaleDateString()}`);
             return weekStart;
         }
 

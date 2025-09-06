@@ -9,7 +9,7 @@ class EventBase(BaseModel):
     end_utc: datetime
     rrule: Optional[str] = None
     exdates: Optional[List[str]] = None
-    kid_ids: Optional[List[Union[str, int]]] = None
+    kid_ids: Optional[List[int]] = None
     category: str = Field(..., pattern="^(school|after-school|family|sports|education|health|test)$")
     source: str = Field(default="manual", pattern="^(manual|ics|google|outlook)$")
     created_by: Optional[str] = None
@@ -17,11 +17,11 @@ class EventBase(BaseModel):
     @field_validator('kid_ids', mode='before')
     @classmethod
     def normalize_kid_ids(cls, v):
-        """Normalize kid_ids to strings"""
+        """Normalize kid_ids to integers"""
         if v is None:
             return None
         if isinstance(v, list):
-            return [str(item) for item in v]
+            return [int(item) if isinstance(item, (str, int)) else item for item in v]
         return v
     
 class EventCreate(EventBase):
@@ -40,7 +40,7 @@ class EventUpdate(BaseModel):
     end_utc: Optional[datetime] = None
     rrule: Optional[str] = None
     exdates: Optional[List[str]] = None
-    kid_ids: Optional[List[Union[str, int]]] = None
+    kid_ids: Optional[List[int]] = None
     category: Optional[str] = Field(None, pattern="^(school|after-school|family|sports|education|health|test)$")
     source: Optional[str] = Field(None, pattern="^(manual|ics|google|outlook)$")
 
