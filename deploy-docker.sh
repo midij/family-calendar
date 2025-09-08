@@ -27,6 +27,17 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
+# Check Docker permissions
+if ! docker ps &> /dev/null; then
+    echo "❌ Docker permission denied. Please fix Docker permissions:"
+    echo "   sudo usermod -aG docker \$USER"
+    echo "   Then log out and back in, or run: newgrp docker"
+    echo ""
+    echo "Alternatively, you can run this script with sudo:"
+    echo "   sudo ./deploy-docker.sh $ENVIRONMENT"
+    exit 1
+fi
+
 # Check if Docker Compose is installed
 if ! command -v docker-compose &> /dev/null; then
     echo "❌ Docker Compose is not installed. Please install Docker Compose first."
