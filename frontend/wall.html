@@ -177,14 +177,13 @@
         }
 
         .time-slot {
-            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: clamp(10px, 1.8vw, 14px);
             color: #7f8c8d;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            min-height: 40px;
+            height: 40px; /* Fixed height to match TIME_SLOT_HEIGHT */
             position: relative;
         }
 
@@ -224,10 +223,9 @@
         }
 
         .child-track-slot {
-            flex: 1;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             position: relative;
-            min-height: 20px;
+            height: 40px; /* Fixed height to match TIME_SLOT_HEIGHT */
         }
 
         /* Enhanced Event Cards */
@@ -804,6 +802,147 @@
         let events = [];
         let lastVersion = null;
         let refreshTimer = null;
+
+        // Helper function to safely parse UTC dates
+        function parseUTCDate(dateString) {
+            if (!dateString) {
+                throw new Error('Date string is null or undefined');
+            }
+            try {
+                // Ensure the time string has 'Z' suffix for UTC interpretation
+                const timeStr = dateString.endsWith('Z') ? dateString : dateString + 'Z';
+                const date = new Date(timeStr);
+                if (isNaN(date.getTime())) {
+                    throw new Error(`Invalid date: ${dateString}`);
+                }
+                
+                // Debug: Log the conversion
+                console.log(`parseUTCDate: "${dateString}" -> "${timeStr}" -> ${date.toLocaleString()}`);
+                
+                return date;
+            } catch (error) {
+                throw new Error(`Error parsing date "${dateString}": ${error.message}`);
+            }
+        }
+
+        // Test function to verify timezone conversion
+        function testTimezoneConversion() {
+            console.log('=== TIMEZONE CONVERSION TEST ===');
+            const testTimes = [
+                '2025-09-09T15:30:00Z', // Dance Class - should be 8:30 AM PDT
+                '2025-09-08T15:00:00Z', // Piano Lesson - should be 8:00 AM PDT
+                '2025-09-09T10:09:00Z'  // oscar test - should be 3:09 AM PDT
+            ];
+            
+            testTimes.forEach(timeStr => {
+                const utcDate = parseUTCDate(timeStr);
+                const localHours = utcDate.getHours();
+                const localMinutes = utcDate.getMinutes();
+                const localTime = localHours + localMinutes / 60;
+                
+                console.log(`${timeStr}:`);
+                console.log(`  UTC: ${utcDate.toISOString()}`);
+                console.log(`  Local: ${utcDate.toLocaleString()}`);
+                console.log(`  Local time: ${localHours}:${localMinutes.toString().padStart(2, '0')} (${localTime})`);
+                console.log(`  Timezone offset: ${utcDate.getTimezoneOffset()} minutes`);
+                
+                // Test positioning calculation
+                const topOffset = (localTime - TIME_START) * TIME_SLOT_HEIGHT;
+                console.log(`  Expected position: top=${topOffset}px (${localTime} - ${TIME_START}) * ${TIME_SLOT_HEIGHT}`);
+            });
+            console.log('=== END TEST ===');
+        }
+
+        // Test function to verify event positioning
+        function testEventPositioning() {
+            console.log('=== EVENT POSITIONING TEST ===');
+            
+            // Test with Dance Class event
+            const danceClassEvent = {
+                title: 'Dance Class',
+                start_utc: '2025-09-09T15:30:00Z',
+                end_utc: '2025-09-09T16:30:00Z'
+            };
+            
+            try {
+                const startTimeUTC = parseUTCDate(danceClassEvent.start_utc);
+                const endTimeUTC = parseUTCDate(danceClassEvent.end_utc);
+                
+                const startTime = startTimeUTC.getHours() + startTimeUTC.getMinutes() / 60;
+                const endTime = endTimeUTC.getHours() + endTimeUTC.getMinutes() / 60;
+                
+                const topOffset = (startTime - TIME_START) * TIME_SLOT_HEIGHT;
+                const height = (endTime - startTime) * TIME_SLOT_HEIGHT;
+                
+                console.log(`Dance Class positioning test:`);
+                console.log(`  UTC: ${danceClassEvent.start_utc} -> ${danceClassEvent.end_utc}`);
+                console.log(`  Local: ${startTimeUTC.toLocaleString()} -> ${endTimeUTC.toLocaleString()}`);
+                console.log(`  startTime: ${startTime}, endTime: ${endTime}`);
+                console.log(`  topOffset: ${topOffset}px, height: ${height}px`);
+                console.log(`  Expected: 8:30 AM should be at ${(8.5 - TIME_START) * TIME_SLOT_HEIGHT}px`);
+                
+            } catch (error) {
+                console.error('Error in positioning test:', error);
+            }
+            
+            console.log('=== END POSITIONING TEST ===');
+        }
+
+        // Add visual test markers to verify positioning
+        function addTestMarkers() {
+            console.log('=== ADDING TEST MARKERS ===');
+            
+            // Add markers for key times to verify positioning
+            const testTimes = [
+                { time: 8.5, label: '8:30 AM', color: 'red' },
+                { time: 8.0, label: '8:00 AM', color: 'blue' },
+                { time: 10.5, label: '10:30 AM', color: 'green' }
+            ];
+            
+            testTimes.forEach(test => {
+                const topOffset = (test.time - TIME_START) * TIME_SLOT_HEIGHT;
+                
+                // Create a test marker
+                const marker = document.createElement('div');
+                marker.style.position = 'absolute';
+                marker.style.top = `${topOffset}px`;
+                marker.style.left = '0';
+                marker.style.width = '100%';
+                marker.style.height = '2px';
+                marker.style.backgroundColor = test.color;
+                marker.style.zIndex = '1000';
+                marker.style.pointerEvents = 'none';
+                marker.title = `${test.label} marker at ${topOffset}px`;
+                
+                // Add to the first day column for visibility
+                const dayColumn = document.getElementById('dayColumn0');
+                if (dayColumn) {
+                    dayColumn.appendChild(marker);
+                    console.log(`Added ${test.label} marker at ${topOffset}px`);
+                }
+            });
+            
+            console.log('=== TEST MARKERS ADDED ===');
+            
+            // Add a reference line at 8:30 AM to verify grid alignment
+            const referenceLine = document.createElement('div');
+            referenceLine.style.position = 'absolute';
+            referenceLine.style.top = '100px'; // 8:30 AM position
+            referenceLine.style.left = '0';
+            referenceLine.style.width = '100%';
+            referenceLine.style.height = '2px';
+            referenceLine.style.backgroundColor = 'orange';
+            referenceLine.style.zIndex = '1001';
+            referenceLine.style.pointerEvents = 'none';
+            referenceLine.title = 'Reference line at 8:30 AM (100px)';
+            
+            // Add to the time column for reference
+            const timeColumn = document.getElementById('timeColumn');
+            if (timeColumn) {
+                timeColumn.appendChild(referenceLine);
+                console.log('Added orange reference line at 8:30 AM (100px)');
+            }
+        }
         let isOnline = true;
         let timeRangeExpanded = false;
         let retryAttempts = 0;
@@ -818,7 +957,11 @@
         async function init() {
             try {
                 console.log('Initializing Enhanced Family Calendar...');
+                console.log('Current date:', new Date().toLocaleString());
                 console.log('Current week start before loading:', currentWeekStart);
+                if (currentWeekStart) {
+                    console.log('Current week start details:', currentWeekStart.toLocaleString(), currentWeekStart.toISOString());
+                }
                 
                 console.log('Loading kids...');
                 await loadKids();
@@ -826,10 +969,20 @@
                 
                 console.log('Loading events...');
                 await loadEvents();
+                
+                // Test timezone conversion
+                testTimezoneConversion();
+                
+                // Test positioning for specific events
+                testEventPositioning();
+                
                 console.log('Events loaded:', events);
                 
                 console.log('Setting up time slots...');
                 setupTimeSlots();
+                
+                // Add visual test markers after time slots are set up
+                addTestMarkers();
                 
                 console.log('Setting up event polling...');
                 setupEventPolling();
@@ -1060,14 +1213,21 @@
 
         // Setup time slots with dynamic range
         function setupTimeSlots() {
+            console.log('Setting up time slots...');
             const timeColumn = document.getElementById('timeColumn');
+            if (!timeColumn) {
+                console.error('timeColumn element not found!');
+                return;
+            }
             timeColumn.innerHTML = '';
 
             for (let hour = TIME_START; hour < TIME_END; hour++) {
                 const timeSlot = document.createElement('div');
                 timeSlot.className = 'time-slot';
                 timeSlot.textContent = `${hour.toString().padStart(2, '0')}:00`;
+                timeSlot.style.height = `${TIME_SLOT_HEIGHT}px`; // Ensure exact height
                 timeColumn.appendChild(timeSlot);
+                console.log(`Created time slot: ${hour}:00 at position ${(hour - TIME_START) * TIME_SLOT_HEIGHT}px`);
             }
 
             // Setup day slots for each day column
@@ -1157,11 +1317,16 @@
 
             // Filter events for current week
             const weekEvents = events.filter(event => {
-                const eventDate = new Date(event.start_utc);
-                const inWeek = isDateInWeek(eventDate, currentWeekStart);
-                console.log(`Event "${event.title}" on ${eventDate.toISOString()} in week:`, inWeek);
-                console.log(`  Event date: ${eventDate.toLocaleDateString()}, Week start: ${currentWeekStart.toLocaleDateString()}`);
-                return inWeek;
+                try {
+                    const eventDate = parseUTCDate(event.start_utc);
+                    const inWeek = isDateInWeek(eventDate, currentWeekStart);
+                    console.log(`Event "${event.title}" on ${eventDate.toISOString()} in week:`, inWeek);
+                    console.log(`  Event date: ${eventDate.toLocaleDateString()}, Week start: ${currentWeekStart.toLocaleDateString()}`);
+                    return inWeek;
+                } catch (error) {
+                    console.error(`Error filtering event "${event.title}":`, error);
+                    return false;
+                }
             });
 
             console.log('Events for current week:', weekEvents.length);
@@ -1170,14 +1335,18 @@
             // Group events by day and time for overlap detection
             const eventsByDay = {};
             weekEvents.forEach(event => {
-                const eventDate = new Date(event.start_utc);
-                const dayIndex = getDayIndex(eventDate, currentWeekStart);
-                
-                if (dayIndex >= 0 && dayIndex <= 6) {
-                    if (!eventsByDay[dayIndex]) {
-                        eventsByDay[dayIndex] = [];
+                try {
+                    const eventDate = parseUTCDate(event.start_utc);
+                    const dayIndex = getDayIndex(eventDate, currentWeekStart);
+                    
+                    if (dayIndex >= 0 && dayIndex <= 6) {
+                        if (!eventsByDay[dayIndex]) {
+                            eventsByDay[dayIndex] = [];
+                        }
+                        eventsByDay[dayIndex].push(event);
                     }
-                    eventsByDay[dayIndex].push(event);
+                } catch (error) {
+                    console.error(`Error processing event "${event.title}":`, error);
                 }
             });
 
@@ -1200,7 +1369,14 @@
             
             // Sort events by start time
             const sortedEvents = events.sort((a, b) => {
-                return new Date(a.start_utc) - new Date(b.start_utc);
+                try {
+                    const dateA = parseUTCDate(a.start_utc);
+                    const dateB = parseUTCDate(b.start_utc);
+                    return dateA - dateB;
+                } catch (error) {
+                    console.error('Error sorting events:', error);
+                    return 0;
+                }
             });
             
             const groups = [];
@@ -1210,13 +1386,19 @@
                 const currentEvent = sortedEvents[i];
                 const lastEventInGroup = currentGroup[currentGroup.length - 1];
                 
-                const currentStart = new Date(currentEvent.start_utc);
-                const lastEnd = new Date(lastEventInGroup.end_utc);
-                
-                // Check if events overlap
-                if (currentStart < lastEnd) {
-                    currentGroup.push(currentEvent);
-                } else {
+                try {
+                    const currentStart = parseUTCDate(currentEvent.start_utc);
+                    const lastEnd = parseUTCDate(lastEventInGroup.end_utc);
+                    
+                    // Check if events overlap
+                    if (currentStart < lastEnd) {
+                        currentGroup.push(currentEvent);
+                    } else {
+                        groups.push(currentGroup);
+                        currentGroup = [currentEvent];
+                    }
+                } catch (error) {
+                    console.error('Error in overlap detection:', error);
                     groups.push(currentGroup);
                     currentGroup = [currentEvent];
                 }
@@ -1229,11 +1411,20 @@
         // Enhanced event rendering
         function renderEvent(event, isOverlapping = false, overlapIndex = 0) {
             console.log(`=== RENDER EVENT CALLED: "${event.title}" ===`);
-            const eventDate = new Date(event.start_utc);
+            // Parse UTC time correctly using helper function
+            let eventDate;
+            try {
+                eventDate = parseUTCDate(event.start_utc);
+            } catch (error) {
+                console.error(`Error parsing start date for event "${event.title}":`, error);
+                return;
+            }
             const dayIndex = getDayIndex(eventDate, currentWeekStart);
             
             console.log(`renderEvent: "${event.title}" - dayIndex: ${dayIndex}, eventDate: ${eventDate.toLocaleDateString()}`);
             console.log(`  Event details: start=${event.start_utc}, kids=${event.kid_ids}`);
+            console.log(`  Current week start: ${currentWeekStart.toLocaleDateString()}`);
+            console.log(`  Event date: ${eventDate.toISOString()}, Week start: ${currentWeekStart.toISOString()}`);
             
             if (dayIndex < 0 || dayIndex > 6) {
                 console.log(`  REJECTED: dayIndex ${dayIndex} is out of range (0-6)`);
@@ -1241,10 +1432,39 @@
             }
 
             // Convert UTC times to local time for positioning
-            const startTime = eventDate.getHours() + eventDate.getMinutes() / 60;
-            const endTime = new Date(event.end_utc).getHours() + new Date(event.end_utc).getMinutes() / 60;
+            let startTimeUTC, endTimeUTC;
+            try {
+                startTimeUTC = parseUTCDate(event.start_utc);
+                endTimeUTC = parseUTCDate(event.end_utc);
+            } catch (error) {
+                console.error(`Error parsing dates for event "${event.title}":`, error);
+                return;
+            }
+            
+            // Convert to local time for display
+            // Use getHours() and getMinutes() which automatically handle timezone conversion
+            const startTime = startTimeUTC.getHours() + startTimeUTC.getMinutes() / 60;
+            const endTime = endTimeUTC.getHours() + endTimeUTC.getMinutes() / 60;
+            
+            // Ensure we have valid time values
+            if (isNaN(startTime) || isNaN(endTime)) {
+                console.error(`Invalid time values for event "${event.title}": startTime=${startTime}, endTime=${endTime}`);
+                return;
+            }
+            
+            // Debug: Verify the time calculation
+            console.log(`  Time calculation: startTime=${startTime} (${startTimeUTC.getHours()}:${startTimeUTC.getMinutes().toString().padStart(2, '0')}), endTime=${endTime}`);
+            
+            // Verify timezone conversion is working correctly
+            const expectedLocalHour = startTimeUTC.getUTCHours() - (startTimeUTC.getTimezoneOffset() / 60);
+            console.log(`  Timezone verification: UTC ${startTimeUTC.getUTCHours()}:${startTimeUTC.getUTCMinutes().toString().padStart(2, '0')} -> Local ${startTimeUTC.getHours()}:${startTimeUTC.getMinutes().toString().padStart(2, '0')} (offset: ${startTimeUTC.getTimezoneOffset()} min)`);
             
             console.log(`Event "${event.title}": startTime=${startTime}, Math.floor(startTime)=${Math.floor(startTime)}`);
+            console.log(`  UTC times: start=${event.start_utc}, end=${event.end_utc}`);
+            console.log(`  Local times: start=${startTimeUTC.toLocaleString()}, end=${endTimeUTC.toLocaleString()}`);
+            console.log(`  Timezone offset: ${startTimeUTC.getTimezoneOffset()} minutes`);
+            console.log(`  Raw UTC hours: ${startTimeUTC.getUTCHours()}, Local hours: ${startTimeUTC.getHours()}`);
+            console.log(`  TIME_START: ${TIME_START}, TIME_END: ${TIME_END}, TIME_SLOT_HEIGHT: ${TIME_SLOT_HEIGHT}`);
 
             // Check if event is outside normal business hours (8:00-22:00) for styling
             const isOutsideRange = startTime < 8 || endTime > 22;
@@ -1371,7 +1591,13 @@
             
             const eventTime = document.createElement('div');
             eventTime.className = 'event-time';
-            eventTime.textContent = `${formatTime(eventDate)} - ${formatTime(new Date(event.end_utc))}`;
+            try {
+                const endDate = parseUTCDate(event.end_utc);
+                eventTime.textContent = `${formatTime(eventDate)} - ${formatTime(endDate)}`;
+            } catch (error) {
+                console.error(`Error formatting end time for event "${event.title}":`, error);
+                eventTime.textContent = `${formatTime(eventDate)} - Invalid time`;
+            }
             
             const eventLocation = document.createElement('div');
             eventLocation.className = 'event-location';
@@ -1384,24 +1610,38 @@
             // Position the event card, handling out-of-range events
             let topOffset, height;
             
+            console.log(`  Positioning calculation for "${event.title}":`);
+            console.log(`    startTime: ${startTime}, endTime: ${endTime}`);
+            console.log(`    TIME_START: ${TIME_START}, TIME_END: ${TIME_END}`);
+            
             if (startTime < TIME_START) {
                 // Event starts before visible range - show at top with special styling
                 topOffset = 0;
                 height = Math.max((Math.min(endTime, TIME_END) - TIME_START) * TIME_SLOT_HEIGHT, MIN_EVENT_HEIGHT);
                 eventCard.classList.add('outside-range');
+                console.log(`    Case 1: Before range - topOffset: ${topOffset}, height: ${height}`);
             } else if (endTime > TIME_END) {
                 // Event ends after visible range - show at bottom with special styling
                 topOffset = (startTime - TIME_START) * TIME_SLOT_HEIGHT;
                 height = Math.max((TIME_END - startTime) * TIME_SLOT_HEIGHT, MIN_EVENT_HEIGHT);
                 eventCard.classList.add('outside-range');
+                console.log(`    Case 2: After range - topOffset: ${topOffset}, height: ${height}`);
             } else {
                 // Event is within visible range
-                topOffset = (startTime - TIME_START) * TIME_SLOT_HEIGHT;
+                // Calculate position within the target time slot
+                const targetHour = Math.floor(startTime);
+                const minutesIntoHour = (startTime - targetHour) * 60;
+                topOffset = (minutesIntoHour / 60) * TIME_SLOT_HEIGHT;
                 height = Math.max((endTime - startTime) * TIME_SLOT_HEIGHT, MIN_EVENT_HEIGHT);
+                console.log(`    Case 3: Within range - targetHour: ${targetHour}, minutesIntoHour: ${minutesIntoHour}, topOffset: ${topOffset}, height: ${height}`);
             }
             
             eventCard.style.top = `${topOffset}px`;
             eventCard.style.height = `${height}px`;
+            console.log(`    Final CSS: top=${topOffset}px, height=${height}px`);
+            
+            // Add a visual indicator to help debug positioning
+            eventCard.setAttribute('data-debug', `UTC:${event.start_utc} Local:${startTimeUTC.toLocaleTimeString()} Pos:${topOffset}px`);
             eventCard.style.zIndex = isOverlapping ? (15 + overlapIndex) : 10;
             
             console.log(`  Event "${event.title}" positioned: top=${topOffset}px, height=${height}px, zIndex=${eventCard.style.zIndex}`);
@@ -1422,29 +1662,34 @@
         // Show event modal
         function showEventModal(event) {
             const modal = document.getElementById('eventModal');
-            const eventDate = new Date(event.start_utc);
-            const endDate = new Date(event.end_utc);
-            
-            document.getElementById('modalTitle').textContent = event.title;
-            document.getElementById('modalTime').textContent = 
-                `${formatTime(eventDate)} - ${formatTime(endDate)}`;
-            document.getElementById('modalLocation').textContent = event.location || 'No location';
-            document.getElementById('modalCategory').textContent = event.category || 'Unknown';
-            document.getElementById('modalSource').textContent = event.source || 'Unknown';
-            document.getElementById('modalCreated').textContent = 
-                new Date(event.created_at).toLocaleString();
-            
-            // Get kid names
-            let kidNames = 'None';
-            if (event.kid_ids && event.kid_ids.length > 0) {
-                kidNames = event.kid_ids.map(kidId => {
+            try {
+                const eventDate = parseUTCDate(event.start_utc);
+                const endDate = parseUTCDate(event.end_utc);
+                
+                document.getElementById('modalTitle').textContent = event.title;
+                document.getElementById('modalTime').textContent = 
+                    `${formatTime(eventDate)} - ${formatTime(endDate)}`;
+                document.getElementById('modalLocation').textContent = event.location || 'No location';
+                document.getElementById('modalCategory').textContent = event.category || 'Unknown';
+                document.getElementById('modalSource').textContent = event.source || 'Unknown';
+                document.getElementById('modalCreated').textContent = 
+                    new Date(event.created_at).toLocaleString();
+                
+                // Get kid names
+                let kidNames = 'None';
+                if (event.kid_ids && event.kid_ids.length > 0) {
+                    kidNames = event.kid_ids.map(kidId => {
                     const kid = kids.find(k => k.id == kidId);
                     return kid ? kid.name : `Unknown (${kidId})`;
                 }).join(', ');
             }
-            document.getElementById('modalKids').textContent = kidNames;
-            
-            modal.classList.add('show');
+                document.getElementById('modalKids').textContent = kidNames;
+                
+                modal.classList.add('show');
+            } catch (error) {
+                console.error(`Error showing modal for event "${event.title}":`, error);
+                alert('Error displaying event details: ' + error.message);
+            }
         }
 
         // Close event modal
@@ -1453,9 +1698,12 @@
         }
 
         // Navigation functions
-        function navigateWeek(direction) {
+        async function navigateWeek(direction) {
             currentWeekStart = new Date(currentWeekStart);
             currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
+            
+            // Reload events for the new week
+            await loadEvents();
             updateDisplay();
         }
 
@@ -1605,7 +1853,15 @@
         });
 
         // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded - Starting initialization...');
+            try {
+                init();
+            } catch (error) {
+                console.error('Error during initialization:', error);
+                alert('Error initializing calendar: ' + error.message);
+            }
+        });
     </script>
 </body>
 </html>
