@@ -27,7 +27,8 @@ class Settings(BaseSettings):
         super().__init__(**kwargs)
         
         # Override DATABASE_URL if PostgreSQL environment variables are set
-        if self.ENVIRONMENT == "production" or os.getenv("USE_POSTGRES"):
+        # Only use PostgreSQL if explicitly requested via USE_POSTGRES env var
+        if os.getenv("USE_POSTGRES"):
             self.DATABASE_URL = f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             self.LOCAL_DEV = False
     
