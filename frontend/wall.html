@@ -888,61 +888,7 @@
             console.log('=== END POSITIONING TEST ===');
         }
 
-        // Add visual test markers to verify positioning
-        function addTestMarkers() {
-            console.log('=== ADDING TEST MARKERS ===');
-            
-            // Add markers for key times to verify positioning
-            const testTimes = [
-                { time: 8.5, label: '8:30 AM', color: 'red' },
-                { time: 8.0, label: '8:00 AM', color: 'blue' },
-                { time: 10.5, label: '10:30 AM', color: 'green' }
-            ];
-            
-            testTimes.forEach(test => {
-                const topOffset = (test.time - TIME_START) * TIME_SLOT_HEIGHT;
-                
-                // Create a test marker
-                const marker = document.createElement('div');
-                marker.style.position = 'absolute';
-                marker.style.top = `${topOffset}px`;
-                marker.style.left = '0';
-                marker.style.width = '100%';
-                marker.style.height = '2px';
-                marker.style.backgroundColor = test.color;
-                marker.style.zIndex = '1000';
-                marker.style.pointerEvents = 'none';
-                marker.title = `${test.label} marker at ${topOffset}px`;
-                
-                // Add to the first day column for visibility
-                const dayColumn = document.getElementById('dayColumn0');
-                if (dayColumn) {
-                    dayColumn.appendChild(marker);
-                    console.log(`Added ${test.label} marker at ${topOffset}px`);
-                }
-            });
-            
-            console.log('=== TEST MARKERS ADDED ===');
-            
-            // Add a reference line at 8:30 AM to verify grid alignment
-            const referenceLine = document.createElement('div');
-            referenceLine.style.position = 'absolute';
-            referenceLine.style.top = '100px'; // 8:30 AM position
-            referenceLine.style.left = '0';
-            referenceLine.style.width = '100%';
-            referenceLine.style.height = '2px';
-            referenceLine.style.backgroundColor = 'orange';
-            referenceLine.style.zIndex = '1001';
-            referenceLine.style.pointerEvents = 'none';
-            referenceLine.title = 'Reference line at 8:30 AM (100px)';
-            
-            // Add to the time column for reference
-            const timeColumn = document.getElementById('timeColumn');
-            if (timeColumn) {
-                timeColumn.appendChild(referenceLine);
-                console.log('Added orange reference line at 8:30 AM (100px)');
-            }
-        }
+        // Test markers removed - positioning is now working correctly
         let isOnline = true;
         let timeRangeExpanded = false;
         let retryAttempts = 0;
@@ -980,9 +926,6 @@
                 
                 console.log('Setting up time slots...');
                 setupTimeSlots();
-                
-                // Add visual test markers after time slots are set up
-                addTestMarkers();
                 
                 console.log('Setting up event polling...');
                 setupEventPolling();
