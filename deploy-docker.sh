@@ -51,7 +51,8 @@ mkdir -p data logs ssl
 # Set proper permissions for data directory
 echo "🔐 Setting proper permissions..."
 chmod 755 data logs ssl
-chown -R $USER:$USER data logs ssl
+# Set ownership to the user ID that will run in the container
+chown -R 1000:1000 data logs ssl
 
 # Create self-signed SSL certificate for development (if not exists)
 if [ ! -f "ssl/cert.pem" ] || [ ! -f "ssl/key.pem" ]; then
@@ -70,8 +71,9 @@ docker container prune -f 2>/dev/null || true
 
 # Build and start containers
 echo "🏗️ Building and starting containers..."
-export USER_ID=$(id -u)
-export GROUP_ID=$(id -g)
+# Use a specific user ID to avoid root user issues
+export USER_ID=${USER_ID:-1000}
+export GROUP_ID=${GROUP_ID:-1000}
 docker-compose -f $COMPOSE_FILE up -d --build
 
 # Wait for services to be ready
