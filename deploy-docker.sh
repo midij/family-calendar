@@ -48,6 +48,11 @@ fi
 echo "📁 Creating necessary directories..."
 mkdir -p data logs ssl
 
+# Set proper permissions for data directory
+echo "🔐 Setting proper permissions..."
+chmod 755 data logs ssl
+chown -R $USER:$USER data logs ssl
+
 # Create self-signed SSL certificate for development (if not exists)
 if [ ! -f "ssl/cert.pem" ] || [ ! -f "ssl/key.pem" ]; then
     echo "🔐 Creating self-signed SSL certificate..."
