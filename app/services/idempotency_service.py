@@ -13,7 +13,7 @@ from app.models.event import Event as EventModel
 class IdempotencyService:
     """Service for handling idempotency keys and preventing duplicate operations"""
     
-    # In-memory store for idempotency keys (in production, use Redis or database)
+    # In-memory store for idempotency keys (simple implementation for MVP)
     _idempotency_store: Dict[str, Dict[str, Any]] = {}
     
     @staticmethod

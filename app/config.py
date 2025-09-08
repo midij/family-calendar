@@ -4,7 +4,6 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Database settings
     DATABASE_URL: str = "sqlite:///./family_calendar.db"  # Default to SQLite for local testing
-    REDIS_URL: str = "redis://localhost:6379"  # Optional for now
     
     # API settings
     API_V1_STR: str = "/v1"

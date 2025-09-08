@@ -1,218 +1,219 @@
 # Quick Start Deployment Guide
 
-This guide provides the fastest way to deploy your Family Calendar system to a server.
+This guide provides the fastest way to deploy your Family Calendar system using Docker.
 
 ## Prerequisites
 
-- Ubuntu 20.04+ server with root/sudo access
-- Domain name pointing to your server (optional, but recommended)
+- Linux server with Docker support
 - Basic knowledge of Linux command line
+- 5-10 minutes of setup time
 
-## Option 1: Automated Deployment (Recommended)
+## Quick Docker Deployment
 
-### Step 1: Download and Run Deployment Script
-
-```bash
-# Download the deployment script
-curl -O https://raw.githubusercontent.com/your-username/family-calendar/main/deploy.sh
-chmod +x deploy.sh
-
-# Run the deployment
-./deploy.sh production
-```
-
-The script will automatically:
-- Install all dependencies
-- Set up the application
-- Configure Nginx
-- Set up systemd service
-- Configure firewall
-- Start all services
-
-### Step 2: Access Your Calendar
-
-After deployment, access your calendar at:
-- **Wall Display**: `http://YOUR_SERVER_IP/frontend/wall.html`
-- **Admin Interface**: `http://YOUR_SERVER_IP/frontend/admin.html`
-
-## Option 2: Manual Deployment
-
-### Step 1: Install Dependencies
-
-```bash
-sudo apt update
-sudo apt install -y python3 python3-pip python3-venv nginx git curl
-```
-
-### Step 2: Clone and Setup Application
-
-```bash
-# Clone repository
-git clone https://github.com/your-username/family-calendar.git /opt/family-calendar
-cd /opt/family-calendar
-
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Setup database
-alembic upgrade head
-```
-
-### Step 3: Configure and Start Services
-
-```bash
-# Create systemd service
-sudo cp docs/systemd/family-calendar.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable family-calendar
-sudo systemctl start family-calendar
-
-# Configure Nginx
-sudo cp docs/nginx/family-calendar.conf /etc/nginx/sites-available/
-sudo ln -s /etc/nginx/sites-available/family-calendar.conf /etc/nginx/sites-enabled/
-sudo rm /etc/nginx/sites-enabled/default
-sudo systemctl restart nginx
-```
-
-## Option 3: Docker Deployment
-
-### Step 1: Install Docker
+### Step 1: Install Docker (if not already installed)
 
 ```bash
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
+# Log out and back in to apply group changes
 ```
 
-### Step 2: Deploy with Docker Compose
+### Step 2: Deploy Family Calendar
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/family-calendar.git
+cd family-calendar
+
+# Run the automated deployment script
+chmod +x deploy-docker.sh
+./deploy-docker.sh production
+```
+
+The script will automatically:
+- Create necessary directories (`data`, `logs`, `ssl`)
+- Generate self-signed SSL certificates
+- Build and start Docker containers (app + nginx only)
+- Run database migrations (SQLite - no database server needed)
+- Set up health checks
+- Display access URLs
+
+### Step 3: Access Your Calendar
+
+After deployment, access your calendar at:
+- **Wall Display**: `https://localhost/frontend/wall.html`
+- **Admin Interface**: `https://localhost/frontend/admin.html`
+- **Health Check**: `https://localhost/health`
+
+## Manual Docker Deployment (Alternative)
+
+If you prefer to run the steps manually:
 
 ```bash
 # Clone repository
 git clone https://github.com/your-username/family-calendar.git
 cd family-calendar
 
+# Create necessary directories
+mkdir -p data logs ssl
+
+# Create self-signed SSL certificate
+openssl req -x509 -newkey rsa:4096 -keyout ssl/key.pem -out ssl/cert.pem -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+
 # Start services
 docker-compose -f docker-compose.prod.yml up -d
+
+# Run database migrations (SQLite - no database server needed)
+docker-compose -f docker-compose.prod.yml exec family-calendar alembic upgrade head
+
+# Seed sample data (optional)
+docker-compose -f docker-compose.prod.yml exec family-calendar python seed_data.py
 ```
+
+### Access Your Application
+- **Wall Display**: `https://localhost/frontend/wall.html`
+- **Admin Interface**: `https://localhost/frontend/admin.html`
+- **Health Check**: `https://localhost/health`
 
 ## Post-Deployment Configuration
 
-### 1. Configure Domain (Optional)
+### Configure Domain (Optional)
 
-Edit `/etc/nginx/sites-available/family-calendar` and replace `_` with your domain:
+If you have a domain name, edit `nginx/sites-available/family-calendar.conf`:
 
 ```nginx
 server_name yourdomain.com www.yourdomain.com;
 ```
 
-### 2. Set up SSL (Recommended)
+### Set up Real SSL Certificates (Optional)
+
+Replace the self-signed certificates with real certificates:
 
 ```bash
-sudo certbot --nginx -d yourdomain.com
+# Copy your SSL certificates
+cp your-cert.pem ssl/cert.pem
+cp your-key.pem ssl/key.pem
+
+# Restart containers
+docker-compose -f docker-compose.prod.yml restart
 ```
 
-### 3. Update CORS Settings
+### Update CORS Settings (Optional)
 
-Edit `/opt/family-calendar/.env`:
+Edit environment variables in `docker-compose.prod.yml`:
 
-```env
-CORS_ORIGINS=["https://yourdomain.com", "http://yourdomain.com"]
+```yaml
+environment:
+  - CORS_ORIGINS=["https://yourdomain.com", "http://yourdomain.com"]
 ```
 
-### 4. Restart Services
+## Management Commands
 
 ```bash
-sudo systemctl restart family-calendar
-sudo systemctl restart nginx
+# Check container status
+docker-compose -f docker-compose.prod.yml ps
+
+# View logs
+docker-compose -f docker-compose.prod.yml logs -f
+
+# Restart services
+docker-compose -f docker-compose.prod.yml restart
+
+# Update application
+git pull origin main
+docker-compose -f docker-compose.prod.yml up -d --build
+
+# Stop all services
+docker-compose -f docker-compose.prod.yml down
 ```
 
 ## Access Your Calendar
 
 ### Wall Display (Tablet)
-- **URL**: `https://yourdomain.com/frontend/wall.html`
+- **URL**: `https://localhost/frontend/wall.html` (or your domain)
 - **Purpose**: Full-screen calendar for wall-mounted tablets
 - **Features**: Real-time updates, week navigation, kid color coding
 
 ### Admin Interface (Phone/Computer)
-- **URL**: `https://yourdomain.com/frontend/admin.html`
+- **URL**: `https://localhost/frontend/admin.html` (or your domain)
 - **Purpose**: Manage events and kids
 - **Features**: Create/edit events, manage kids, import/export data
 
-## Management Commands
-
-```bash
-# Check service status
-sudo systemctl status family-calendar
-
-# View logs
-sudo journalctl -u family-calendar -f
-
-# Restart service
-sudo systemctl restart family-calendar
-
-# Update application
-cd /opt/family-calendar
-git pull origin main
-source venv/bin/activate
-pip install -r requirements.txt
-sudo systemctl restart family-calendar
-```
-
 ## Troubleshooting
 
-### Service Won't Start
+### Common Issues
+
+**Containers won't start:**
 ```bash
-sudo journalctl -u family-calendar -n 50
+# Check container logs
+docker-compose -f docker-compose.prod.yml logs
+
+# Check if ports are in use
+sudo netstat -tlnp | grep :80
+sudo netstat -tlnp | grep :443
+
+# Restart containers
+docker-compose -f docker-compose.prod.yml down
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
-### Nginx Issues
+**SSL certificate issues:**
 ```bash
-sudo nginx -t
-sudo systemctl status nginx
+# Check certificate files
+ls -la ssl/
+
+# Regenerate self-signed certificate
+rm ssl/cert.pem ssl/key.pem
+openssl req -x509 -newkey rsa:4096 -keyout ssl/key.pem -out ssl/cert.pem -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
 ```
 
-### Port Already in Use
+**Health check fails:**
 ```bash
-sudo netstat -tlnp | grep 8000
-sudo lsof -i :8000
+# Test health endpoint
+curl -k https://localhost/health
+
+# Check container status
+docker-compose -f docker-compose.prod.yml ps
 ```
 
 ## Security Checklist
 
+- [ ] SSL certificate installed (replace self-signed for production)
 - [ ] Firewall configured (ports 22, 80, 443)
-- [ ] SSL certificate installed
-- [ ] Strong secret key in .env file
-- [ ] Regular system updates
+- [ ] Regular container updates
 - [ ] Application updates scheduled
 
 ## Performance Tuning
 
-### Increase Workers (for high traffic)
-Edit `/etc/systemd/system/family-calendar.service`:
-```
-ExecStart=/opt/family-calendar/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 8
+**Increase Workers:**
+Edit `docker-compose.prod.yml`:
+```yaml
+environment:
+  - WORKERS=8
 ```
 
-### Enable Nginx Caching
-Add to Nginx configuration:
-```nginx
-location /frontend/ {
-    alias /opt/family-calendar/frontend/;
-    expires 1d;
-    add_header Cache-Control "public, immutable";
-}
-```
+**Enable Nginx Caching:**
+The Nginx configuration already includes caching for static files.
 
 ## Support
 
 For issues or questions:
-1. Check the logs: `sudo journalctl -u family-calendar -f`
-2. Verify configuration: `sudo nginx -t`
-3. Test health endpoint: `curl http://localhost:8000/health`
+
+1. Check container logs: `docker-compose -f docker-compose.prod.yml logs -f`
+2. Test health endpoint: `curl -k https://localhost/health`
+3. Check container status: `docker-compose -f docker-compose.prod.yml ps`
 4. Check the full deployment guide: `docs/DEPLOYMENT.md`
 
 Your Family Calendar is now ready for production use! 🎉
+
+## Summary
+
+This quick start guide provides a **fast, safe Docker deployment** that:
+- ✅ Requires zero system changes
+- ✅ Provides complete isolation from other applications
+- ✅ Can be easily removed with `docker-compose down`
+- ✅ Includes SSL, Nginx, and health checks
+- ✅ Works on any system with Docker
+
+For more detailed configuration options, see the full `docs/DEPLOYMENT.md` guide.

@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   family-calendar:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     container_name: family-calendar-app
     restart: unless-stopped
-    ports:
-      - "8000:8000"
     environment:
       - ENVIRONMENT=production
       - DEBUG=false
@@ -15,6 +15,7 @@ services:
       - PORT=8000
       - WORKERS=4
       - LOG_LEVEL=INFO
+      - CORS_ORIGINS=["https://localhost", "http://localhost", "https://yourdomain.com", "http://yourdomain.com"]
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
@@ -47,7 +48,3 @@ services:
 networks:
   family-calendar-network:
     driver: bridge
-
-volumes:
-  data:
-  logs:

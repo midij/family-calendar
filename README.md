@@ -200,7 +200,7 @@ python test_setup.py
 ## Summary of Task 1 Implementation
 
 ✅ **Project Structure Created**: Complete directory structure with proper Python packages
-✅ **Docker Setup**: Dockerfile and docker-compose.yml with PostgreSQL and Redis
+✅ **Docker Setup**: Dockerfile and docker-compose.yml with SQLite database
 ✅ **Python Environment**: requirements.txt with all necessary dependencies
 ✅ **Database Models**: SQLAlchemy models for Kid and Event with proper relationships
 ✅ **API Structure**: FastAPI application with basic endpoints for kids and events
@@ -210,7 +210,7 @@ python test_setup.py
 
 The project is now ready for development with:
 - FastAPI backend with proper API structure
-- PostgreSQL database with Redis for caching
+- SQLite database with real-time polling
 - Docker containerization for easy development
 - Database migration system
 - Basic CRUD endpoints for kids and events

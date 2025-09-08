@@ -15,7 +15,7 @@ This document breaks down the family calendar MVP into sequential, testable task
 - Set up Docker and docker-compose files
 - Initialize Python virtual environment
 - Create requirements.txt with dependencies
-- Set up PostgreSQL and Redis containers
+- Set up SQLite database (embedded, no external database server needed)
 - Create basic project configuration
 
 **Test Plan**:

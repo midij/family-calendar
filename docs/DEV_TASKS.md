@@ -9,10 +9,10 @@
 
 ## 1. 技术栈
 - 后端：Python FastAPI + SQLAlchemy 2.x + Pydantic v2  
-- DB：PostgreSQL 16（主存储），Redis 7（可选 SSE 推送）  
+- DB：SQLite（嵌入式数据库，无需外部数据库服务器）  
 - 工具：python-dateutil（RRULE/EXDATE 展开）  
-- 前端：HTML/CSS/JS（响应式，后续可升级为 PWA）  
-- 容器：Docker + docker-compose  
+- 前端：HTML/CSS/JS（响应式，后续可升级为 PWA）
+- 容器：Docker + docker-compose
 
 ---
 
@@ -80,8 +80,8 @@ Body 示例：
 - `POST /v1/import/csv`（multipart，含标题、时间、kidIds 等）  
 - `POST /v1/import/ics`（解析 VEVENT → 调用 /v1/events）  
 
-### 4.6 SSE 推送
-- `GET /v1/events/stream`（服务端推送版本号，壁挂端收到后刷新）  
+### 4.6 实时更新
+- `GET /v1/events/version`（返回最新更新时间戳，壁挂端轮询检查）  
 
 ---
 
@@ -92,7 +92,7 @@ Body 示例：
 - 字体：全局 `clamp(14px, 2vw, 24px)`；事件卡 `clamp(12px, 1.2vw, 18px)`。  
 - 顶部按钮：今天/上周/下周。  
 - 状态：无事件显示提示；断网显示缓存+“上次更新 HH:mm”。  
-- 实时：优先 SSE，失败回退 5–10min 轮询。  
+- 实时：数据库时间戳轮询，5–10秒检查一次。  
 
 ---
 
@@ -130,7 +130,7 @@ Body 示例：
 - ✅ 周视图正确渲染（含超时段扩展）。  
 - ✅ RRULE/EXDATE 展开正确。  
 - ✅ 性能：500 实例内响应 ≤150ms，渲染 ≤1s。  
-- ✅ 刷新延迟 ≤10s（SSE）或 ≤10min（轮询）。  
+- ✅ 刷新延迟 ≤10s（数据库时间戳轮询）。  
 - ✅ 断网显示缓存，联网自动更新。  
 - ✅ 2–3 米远可读。  
 
