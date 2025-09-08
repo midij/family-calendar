@@ -59,6 +59,10 @@ fi
 echo "🛑 Stopping existing containers..."
 docker-compose -f $COMPOSE_FILE down 2>/dev/null || true
 
+# Force remove any problematic containers
+echo "🧹 Cleaning up any problematic containers..."
+docker container prune -f 2>/dev/null || true
+
 # Build and start containers
 echo "🏗️ Building and starting containers..."
 docker-compose -f $COMPOSE_FILE up -d --build
