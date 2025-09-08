@@ -70,6 +70,8 @@ docker container prune -f 2>/dev/null || true
 
 # Build and start containers
 echo "🏗️ Building and starting containers..."
+export USER_ID=$(id -u)
+export GROUP_ID=$(id -g)
 docker-compose -f $COMPOSE_FILE up -d --build
 
 # Wait for services to be ready
