@@ -37,8 +37,9 @@ def upgrade() -> None:
     )
     
     # Copy data from old table to new table (if old table exists)
+    from sqlalchemy import text
     connection = op.get_bind()
-    result = connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")
+    result = connection.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name='events'"))
     if result.fetchone():
         op.execute("""
             INSERT INTO events_new (id, created_at, updated_at, title, location, start_utc, end_utc, 
@@ -53,7 +54,7 @@ def upgrade() -> None:
     
     # Drop the old table (if it exists)
     connection = op.get_bind()
-    result = connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")
+    result = connection.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name='events'"))
     if result.fetchone():
         op.drop_table('events')
     
