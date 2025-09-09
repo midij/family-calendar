@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Timezone Conversion Test</title>
+</head>
+<body>
+    <h1>Timezone Conversion Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        function testTimezoneConversion() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Testing Timezone Conversion</h2>';
+            
+            // Test case: 8:00 AM local time
+            const testDate = '2025-09-09';
+            const testTime = '08:00';
+            
+            // Create local date
+            const localDate = new Date(`${testDate}T${testTime}`);
+            
+            // Convert to UTC using the fixed method
+            const utcString = localDate.toISOString();
+            
+            // Display results
+            results.innerHTML += `
+                <p><strong>Input:</strong> ${testDate} ${testTime} (local time)</p>
+                <p><strong>Local Date Object:</strong> ${localDate.toString()}</p>
+                <p><strong>UTC String:</strong> ${utcString}</p>
+                <p><strong>Timezone Offset:</strong> ${localDate.getTimezoneOffset()} minutes</p>
+            `;
+            
+            // Test the reverse conversion
+            const backToLocal = new Date(utcString);
+            results.innerHTML += `
+                <p><strong>Back to Local:</strong> ${backToLocal.toString()}</p>
+                <p><strong>Local Time String:</strong> ${backToLocal.toTimeString().slice(0, 5)}</p>
+            `;
+            
+            // Expected behavior: 8:00 AM local should become 15:00 UTC (if PDT, UTC-7)
+            const expectedUtcHour = 8 + Math.floor(localDate.getTimezoneOffset() / 60);
+            results.innerHTML += `
+                <p><strong>Expected UTC Hour:</strong> ${expectedUtcHour}:00</p>
+                <p><strong>Actual UTC Hour:</strong> ${new Date(utcString).getUTCHours()}:00</p>
+                <p><strong>Test Result:</strong> ${expectedUtcHour === new Date(utcString).getUTCHours() ? '✅ PASS' : '❌ FAIL'}</p>
+            `;
+        }
+        
+        // Run test when page loads
+        window.onload = testTimezoneConversion;
+    </script>
+</body>
+</html>

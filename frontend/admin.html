@@ -907,9 +907,9 @@
             const startLocal = new Date(`${startDate}T${startTime}`);
             const endLocal = new Date(`${endDate}T${endTime}`);
             
-            // Convert to UTC by adding timezone offset (getTimezoneOffset() returns negative values for positive offsets)
-            const startUtc = new Date(startLocal.getTime() + (startLocal.getTimezoneOffset() * 60000)).toISOString();
-            const endUtc = new Date(endLocal.getTime() + (endLocal.getTimezoneOffset() * 60000)).toISOString();
+            // Convert to UTC - JavaScript Date objects automatically handle timezone conversion
+            const startUtc = startLocal.toISOString();
+            const endUtc = endLocal.toISOString();
             
             const selectedKids = Array.from(document.getElementById('eventKids').selectedOptions)
                 .map(option => option.value);
@@ -990,13 +990,11 @@
             document.getElementById('eventTitle').value = event.title;
             document.getElementById('eventLocation').value = event.location || '';
             // Convert UTC times to local time for form display
-            const startLocal = new Date(startDate.getTime() - (startDate.getTimezoneOffset() * 60000));
-            const endLocal = new Date(endDate.getTime() - (endDate.getTimezoneOffset() * 60000));
-            
-            document.getElementById('eventStartDate').value = startLocal.toISOString().split('T')[0];
-            document.getElementById('eventStartTime').value = startLocal.toTimeString().slice(0, 5);
-            document.getElementById('eventEndDate').value = endLocal.toISOString().split('T')[0];
-            document.getElementById('eventEndTime').value = endLocal.toTimeString().slice(0, 5);
+            // JavaScript Date objects automatically handle timezone conversion
+            document.getElementById('eventStartDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('eventStartTime').value = startDate.toTimeString().slice(0, 5);
+            document.getElementById('eventEndDate').value = endDate.toISOString().split('T')[0];
+            document.getElementById('eventEndTime').value = endDate.toTimeString().slice(0, 5);
             document.getElementById('eventCategory').value = event.category;
             document.getElementById('eventRRule').value = event.rrule || '';
             
