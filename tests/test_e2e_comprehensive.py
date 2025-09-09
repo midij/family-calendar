@@ -46,7 +46,7 @@ class E2ETestSuite:
                 "location": "Test Location 1",
                 "start_utc": "2025-09-05T10:00:00Z",
                 "end_utc": "2025-09-05T11:00:00Z",
-                "kid_ids": [str(self.test_data["kids"][0]["id"])],
+                "kid_ids": [self.test_data["kids"][0]["id"]],
                 "category": "family",
                 "source": "manual"
             },
@@ -56,7 +56,7 @@ class E2ETestSuite:
                 "start_utc": "2025-09-06T14:00:00Z",
                 "end_utc": "2025-09-06T15:00:00Z",
                 "rrule": "FREQ=WEEKLY;BYDAY=FR;UNTIL=2025-12-20T00:00:00Z",
-                "kid_ids": [str(self.test_data["kids"][1]["id"])],
+                "kid_ids": [self.test_data["kids"][1]["id"]],
                 "category": "after-school",
                 "source": "manual"
             },
@@ -65,7 +65,7 @@ class E2ETestSuite:
                 "location": "Test Location 3",
                 "start_utc": "2025-09-07T16:00:00Z",
                 "end_utc": "2025-09-07T17:00:00Z",
-                "kid_ids": [str(self.test_data["kids"][0]["id"]), str(self.test_data["kids"][2]["id"])],
+                "kid_ids": [self.test_data["kids"][0]["id"], self.test_data["kids"][2]["id"]],
                 "category": "family",
                 "source": "manual"
             }
@@ -131,7 +131,7 @@ class E2ETestSuite:
             "location": "Workflow Location",
             "start_utc": "2025-09-08T10:00:00Z",
             "end_utc": "2025-09-08T11:00:00Z",
-            "kid_ids": [str(created_kid["id"])],
+            "kid_ids": [created_kid["id"]],
             "category": "family",
             "source": "manual"
         }
@@ -253,7 +253,7 @@ class E2ETestSuite:
             "end_utc": "2025-09-09T10:00:00Z",
             "rrule": "FREQ=WEEKLY;BYDAY=MO,WE,FR;UNTIL=2025-12-20T00:00:00Z",
             "exdates": ["2025-10-13", "2025-11-27"],  # Skip some instances
-            "kid_ids": [str(self.test_data["kids"][0]["id"])],
+            "kid_ids": [self.test_data["kids"][0]["id"]],
             "category": "after-school",
             "source": "manual"
         }
@@ -332,7 +332,7 @@ class E2ETestSuite:
                     "location": f"Concurrent Location {operation_id}",
                     "start_utc": f"2025-09-{10 + operation_id}T10:00:00Z",
                     "end_utc": f"2025-09-{10 + operation_id}T11:00:00Z",
-                    "kid_ids": [str(kid["id"])],
+                    "kid_ids": [kid["id"]],
                     "category": "family",
                     "source": "manual"
                 }
@@ -450,7 +450,7 @@ class E2ETestSuite:
             "location": "Real-time Location",
             "start_utc": "2025-09-15T10:00:00Z",
             "end_utc": "2025-09-15T11:00:00Z",
-            "kid_ids": [str(self.test_data["kids"][0]["id"])],
+            "kid_ids": [self.test_data["kids"][0]["id"]],
             "category": "family",
             "source": "manual"
         }

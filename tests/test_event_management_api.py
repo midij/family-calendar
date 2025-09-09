@@ -95,6 +95,8 @@ class TestEventManagementAPI:
     
     def test_update_event_different_idempotency_keys(self, client, sample_event):
         """Test that different idempotency keys produce different results"""
+        import time
+        
         update_data = {"title": "Different Update"}
         
         # First request
@@ -106,6 +108,9 @@ class TestEventManagementAPI:
         
         assert response1.status_code == 200
         data1 = response1.json()
+        
+        # Small delay to ensure different timestamps
+        time.sleep(1)
         
         # Second request with different idempotency key
         response2 = client.patch(
@@ -254,7 +259,7 @@ class TestEventManagementAPI:
     def test_update_event_kid_ids(self, client, sample_event):
         """Test updating event with kid_ids"""
         update_data = {
-            "kid_ids": ["1", "2", "3"]
+            "kid_ids": [1, 2, 3]
         }
         
         response = client.patch(f"/v1/events/{sample_event.id}", json=update_data)

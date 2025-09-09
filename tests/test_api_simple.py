@@ -77,7 +77,7 @@ class TestAPISimple:
             "title": "Test Event",
             "start_utc": "2025-09-05T10:00:00Z",
             "end_utc": "2025-09-05T11:00:00Z",
-            "kid_ids": ["1"],
+            "kid_ids": [1],
             "category": "family",
             "source": "manual"
         }

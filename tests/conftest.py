@@ -76,7 +76,7 @@ def sample_event_data():
         "end_utc": datetime(2025, 9, 2, 9, 0, 0, tzinfo=timezone.utc),
         "rrule": "FREQ=WEEKLY;BYDAY=TU,TH;UNTIL=2025-12-20T00:00:00Z",
         "exdates": ["2025-10-01"],
-        "kid_ids": ["1"],
+        "kid_ids": [1],
         "category": "after-school",
         "source": "manual",
         "created_by": "admin"
@@ -101,7 +101,7 @@ def sample_event_api_data():
         "end_utc": "2025-09-02T09:00:00Z",
         "rrule": "FREQ=WEEKLY;BYDAY=TU,TH;UNTIL=2025-12-20T00:00:00Z",
         "exdates": ["2025-10-01"],
-        "kid_ids": ["1"],
+        "kid_ids": [1],
         "category": "after-school",
         "source": "manual",
         "created_by": "admin"

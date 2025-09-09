@@ -961,6 +961,7 @@
         async function loadKids() {
             const kidsData = await fetchWithRetry(`${API_BASE_URL}/kids/`, 'kids');
             kids = kidsData;
+            console.log('Loaded kids:', kids.map(k => ({id: k.id, name: k.name})));
             updateColorLegend();
             return kidsData;
         }
@@ -1250,11 +1251,6 @@
 
         // Enhanced event rendering with overlap detection
         function renderEvents() {
-            console.log('Enhanced rendering events...');
-            console.log('Total events:', events.length);
-            console.log('Current week start:', currentWeekStart);
-            console.log('All events:', events.map(e => ({title: e.title, start: e.start_utc, kids: e.kid_ids})));
-            
             // Clear existing events
             document.querySelectorAll('.event-card').forEach(card => card.remove());
 
@@ -1263,8 +1259,16 @@
                 try {
                     const eventDate = parseUTCDate(event.start_utc);
                     const inWeek = isDateInWeek(eventDate, currentWeekStart);
-                    console.log(`Event "${event.title}" on ${eventDate.toISOString()} in week:`, inWeek);
-                    console.log(`  Event date: ${eventDate.toLocaleDateString()}, Week start: ${currentWeekStart.toLocaleDateString()}`);
+                    
+                    // Debug: Only log for the specific event we're debugging
+                    if (event.title === "oscar utc test") {
+                        console.log(`DEBUG: Event "${event.title}" filtering:`, {
+                            eventDate: eventDate.toISOString(),
+                            weekStart: currentWeekStart.toISOString(),
+                            inWeek: inWeek
+                        });
+                    }
+                    
                     return inWeek;
                 } catch (error) {
                     console.error(`Error filtering event "${event.title}":`, error);
@@ -1272,8 +1276,6 @@
                 }
             });
 
-            console.log('Events for current week:', weekEvents.length);
-            console.log('Week events:', weekEvents);
 
             // Group events by day and time for overlap detection
             const eventsByDay = {};
@@ -1353,7 +1355,6 @@
 
         // Enhanced event rendering
         function renderEvent(event, isOverlapping = false, overlapIndex = 0) {
-            console.log(`=== RENDER EVENT CALLED: "${event.title}" ===`);
             // Parse UTC time correctly using helper function
             let eventDate;
             try {
@@ -1364,13 +1365,19 @@
             }
             const dayIndex = getDayIndex(eventDate, currentWeekStart);
             
-            console.log(`renderEvent: "${event.title}" - dayIndex: ${dayIndex}, eventDate: ${eventDate.toLocaleDateString()}`);
-            console.log(`  Event details: start=${event.start_utc}, kids=${event.kid_ids}`);
-            console.log(`  Current week start: ${currentWeekStart.toLocaleDateString()}`);
-            console.log(`  Event date: ${eventDate.toISOString()}, Week start: ${currentWeekStart.toISOString()}`);
+            // Debug: Only log for the specific event we're debugging
+            if (event.title === "oscar utc test") {
+                console.log(`DEBUG: renderEvent called for "${event.title}":`, {
+                    eventDate: eventDate.toISOString(),
+                    weekStart: currentWeekStart.toISOString(),
+                    dayIndex: dayIndex
+                });
+            }
             
             if (dayIndex < 0 || dayIndex > 6) {
-                console.log(`  REJECTED: dayIndex ${dayIndex} is out of range (0-6)`);
+                if (event.title === "oscar utc test") {
+                    console.log(`DEBUG: REJECTED: dayIndex ${dayIndex} is out of range (0-6)`);
+                }
                 return;
             }
 
@@ -1395,19 +1402,16 @@
                 return;
             }
             
-            // Debug: Verify the time calculation
-            console.log(`  Time calculation: startTime=${startTime} (${startTimeUTC.getHours()}:${startTimeUTC.getMinutes().toString().padStart(2, '0')}), endTime=${endTime}`);
+            // Debug: Only log for the specific event we're debugging
+            if (event.title === "oscar utc test") {
+                console.log(`DEBUG: Time calculation for "${event.title}":`, {
+                    startTime: startTime,
+                    endTime: endTime,
+                    targetHour: Math.floor(startTime)
+                });
+            }
             
-            // Verify timezone conversion is working correctly
-            const expectedLocalHour = startTimeUTC.getUTCHours() - (startTimeUTC.getTimezoneOffset() / 60);
-            console.log(`  Timezone verification: UTC ${startTimeUTC.getUTCHours()}:${startTimeUTC.getUTCMinutes().toString().padStart(2, '0')} -> Local ${startTimeUTC.getHours()}:${startTimeUTC.getMinutes().toString().padStart(2, '0')} (offset: ${startTimeUTC.getTimezoneOffset()} min)`);
             
-            console.log(`Event "${event.title}": startTime=${startTime}, Math.floor(startTime)=${Math.floor(startTime)}`);
-            console.log(`  UTC times: start=${event.start_utc}, end=${event.end_utc}`);
-            console.log(`  Local times: start=${startTimeUTC.toLocaleString()}, end=${endTimeUTC.toLocaleString()}`);
-            console.log(`  Timezone offset: ${startTimeUTC.getTimezoneOffset()} minutes`);
-            console.log(`  Raw UTC hours: ${startTimeUTC.getUTCHours()}, Local hours: ${startTimeUTC.getHours()}`);
-            console.log(`  TIME_START: ${TIME_START}, TIME_END: ${TIME_END}, TIME_SLOT_HEIGHT: ${TIME_SLOT_HEIGHT}`);
 
             // Check if event is outside normal business hours (8:00-22:00) for styling
             const isOutsideRange = startTime < 8 || endTime > 22;
@@ -1418,32 +1422,40 @@
                 const kidId = event.kid_ids[0]; // Use first kid ID
                 const targetHour = Math.floor(startTime);
                 
-                console.log(`  Looking for kid track with ID: ${kidId} (type: ${typeof kidId}) in day ${dayIndex} at hour ${targetHour}`);
+                // Debug: Only log for the specific event we're debugging
+                if (event.title === "oscar utc test") {
+                    console.log(`DEBUG: Looking for kid track with ID: ${kidId} (type: ${typeof kidId}) in day ${dayIndex} at hour ${targetHour}`);
+                }
                 
                 // Find the specific slot for this kid, day, and hour
                 const dayColumn = document.getElementById(`dayColumn${dayIndex}`);
                 if (dayColumn) {
                     const slots = dayColumn.querySelectorAll('.child-track-slot');
                     
+                    // Debug: Only log for the specific event we're debugging
+                    if (event.title === "oscar utc test") {
+                        console.log(`DEBUG: Found ${slots.length} slots in day ${dayIndex}`);
+                        for (let i = 0; i < Math.min(slots.length, 5); i++) {
+                            const slot = slots[i];
+                            console.log(`  Slot ${i}: kidId=${slot.dataset.kidId}, day=${slot.dataset.day}, hour=${slot.dataset.hour}`);
+                        }
+                    }
+                    
                     for (let slot of slots) {
-                        if (parseInt(slot.dataset.kidId) === kidId && 
-                            parseInt(slot.dataset.day) === dayIndex && 
-                            parseInt(slot.dataset.hour) === targetHour) {
+        if (parseInt(slot.dataset.kidId) === kidId && 
+            parseInt(slot.dataset.day) === dayIndex && 
+            parseInt(slot.dataset.hour) === targetHour) {
                             targetTrack = slot;
                             break;
                         }
                     }
                 }
-                
-                console.log(`  Found targetTrack:`, targetTrack);
             }
 
             // If no specific kid track, use the first track for this day and hour
             if (!targetTrack) {
                 const dayColumn = document.getElementById(`dayColumn${dayIndex}`);
                 const targetHour = Math.floor(startTime);
-                
-                console.log(`Looking for any targetTrack in dayColumn${dayIndex} with hour ${targetHour}`);
                 
                 if (dayColumn) {
                     // Find the first slot with the target hour in this specific day column
@@ -1456,13 +1468,14 @@
                             break;
                         }
                     }
-                    
-                    console.log(`Found targetTrack:`, targetTrack);
                 }
             }
 
             if (!targetTrack) {
-                console.log(`  REJECTED: No target track found for event "${event.title}"`);
+                // Only log rejection for the specific event we're debugging
+                if (event.title === "oscar utc test") {
+                    console.log(`DEBUG: REJECTED: No target track found for event "${event.title}"`);
+                }
                 return;
             }
 
@@ -1595,11 +1608,7 @@
             };
 
             // Append directly to the targetTrack (time-slot)
-            console.log(`targetTrack:`, targetTrack);
-            console.log(`Appending event "${event.title}" to targetTrack`);
-            console.log(`Event card content:`, eventCard.outerHTML);
             targetTrack.appendChild(eventCard);
-            console.log(`Event "${event.title}" successfully appended to DOM`);
         }
 
         // Show event modal
@@ -1675,7 +1684,6 @@
             const diffTime = date.getTime() - weekStart.getTime();
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
             
-            console.log(`getDayIndex: event date ${date.toLocaleDateString()}, week start ${weekStart.toLocaleDateString()}, diff days: ${diffDays}`);
             
             return diffDays;
         }
@@ -1688,9 +1696,6 @@
             // The date parameter is already a Date object created from UTC string
             // JavaScript automatically converts it to local time when creating the Date object
             // So we can compare directly with local week boundaries
-            
-            console.log(`Checking if event ${date.toISOString()} is between ${weekStart.toISOString()} and ${weekEnd.toISOString()}`);
-            console.log(`Event local date: ${date.toLocaleDateString()}, Week: ${weekStart.toLocaleDateString()} to ${weekEnd.toLocaleDateString()}`);
             
             return date >= weekStart && date <= weekEnd;
         }

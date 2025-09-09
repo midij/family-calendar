@@ -101,7 +101,7 @@ class TestAdminInterface:
             "location": "Test Location",
             "start_utc": start_time.isoformat() + "Z",
             "end_utc": end_time.isoformat() + "Z",
-            "kid_ids": [str(self.test_kid_id)] if self.test_kid_id else None,
+            "kid_ids": [self.test_kid_id] if self.test_kid_id else None,
             "category": "family",
             "source": "manual"
         }
