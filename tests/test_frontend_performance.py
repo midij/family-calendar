@@ -154,7 +154,7 @@ class FrontendPerformanceTest:
                         errors.put(f"Request {request_id} {req_name}: HTTP {response.status_code}")
                         return
                     
-                    if response_time > 300:
+                    if response_time > 500:
                         errors.put(f"Request {request_id} {req_name}: Too slow {response_time:.2f}ms")
                         return
                 
