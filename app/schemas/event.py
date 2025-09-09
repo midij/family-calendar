@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, field_serializer
 from typing import Optional, List, Union
 from datetime import datetime
 
@@ -50,6 +50,13 @@ class Event(EventBase):
     updated_at: Optional[datetime] = None
     
     model_config = {"from_attributes": True}
+    
+    @field_serializer('start_utc', 'end_utc', 'created_at', 'updated_at')
+    def serialize_datetime(self, value):
+        """Serialize datetime fields to ISO format with Z suffix"""
+        if value:
+            return value.strftime('%Y-%m-%dT%H:%M:%SZ')
+        return value
     
     @classmethod
     def from_orm(cls, obj):
