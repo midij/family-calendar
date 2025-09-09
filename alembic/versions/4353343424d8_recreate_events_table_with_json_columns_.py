@@ -36,20 +36,26 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id')
     )
     
-    # Copy data from old table to new table
-    op.execute("""
-        INSERT INTO events_new (id, created_at, updated_at, title, location, start_utc, end_utc, 
-                               rrule, exdates, kid_ids, category, source, created_by)
-        SELECT id, created_at, updated_at, title, location, start_utc, end_utc, 
-               rrule, 
-               CASE WHEN exdates IS NOT NULL AND exdates != '' THEN json(exdates) ELSE NULL END,
-               CASE WHEN kid_ids IS NOT NULL AND kid_ids != '' THEN json(kid_ids) ELSE NULL END,
-               category, source, created_by
-        FROM events
-    """)
+    # Copy data from old table to new table (if old table exists)
+    connection = op.get_bind()
+    result = connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")
+    if result.fetchone():
+        op.execute("""
+            INSERT INTO events_new (id, created_at, updated_at, title, location, start_utc, end_utc, 
+                                   rrule, exdates, kid_ids, category, source, created_by)
+            SELECT id, created_at, updated_at, title, location, start_utc, end_utc, 
+                   rrule, 
+                   CASE WHEN exdates IS NOT NULL AND exdates != '' THEN json(exdates) ELSE NULL END,
+                   CASE WHEN kid_ids IS NOT NULL AND kid_ids != '' THEN json(kid_ids) ELSE NULL END,
+                   category, source, created_by
+            FROM events
+        """)
     
-    # Drop the old table
-    op.drop_table('events')
+    # Drop the old table (if it exists)
+    connection = op.get_bind()
+    result = connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='events'")
+    if result.fetchone():
+        op.drop_table('events')
     
     # Rename the new table
     op.rename_table('events_new', 'events')
