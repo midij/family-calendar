@@ -42,7 +42,12 @@ def get_events(
         
         # Kid filtering - check if kid_id is in the kid_ids JSON array
         if kid_id:
-            query = query.filter(EventModel.kid_ids.contains([kid_id]))
+            try:
+                kid_id_int = int(kid_id)
+                query = query.filter(EventModel.kid_ids.contains([kid_id_int]))
+            except ValueError:
+                # If kid_id is not a valid integer, return empty results
+                query = query.filter(False)
         
         # Category filtering
         if category:

@@ -22,7 +22,7 @@ class TestEventsAPI:
         assert data[0]["title"] == "钢琴课"
         assert data[0]["location"] == "艺术中心302"
         assert data[0]["category"] == "after-school"
-        assert data[0]["kid_ids"] == ["1"]
+        assert data[0]["kid_ids"] == [1]
         assert "id" in data[0]
         assert "created_at" in data[0]
     
@@ -164,7 +164,7 @@ class TestEventsAPI:
             title="Event for Kid 1",
             start_utc=datetime(2025, 9, 2, 8, 0, 0, tzinfo=timezone.utc),
             end_utc=datetime(2025, 9, 2, 9, 0, 0, tzinfo=timezone.utc),
-            kid_ids=["1"],
+            kid_ids=[1],
             category="family",
             source="manual"
         )
@@ -172,7 +172,7 @@ class TestEventsAPI:
             title="Event for Kid 2",
             start_utc=datetime(2025, 9, 2, 10, 0, 0, tzinfo=timezone.utc),
             end_utc=datetime(2025, 9, 2, 11, 0, 0, tzinfo=timezone.utc),
-            kid_ids=["2"],
+            kid_ids=[2],
             category="family",
             source="manual"
         )
@@ -185,7 +185,7 @@ class TestEventsAPI:
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
-        assert data[0]["kid_ids"] == ["1"]
+        assert data[0]["kid_ids"] == [1]
     
     def test_filter_events_by_date_range(self, client, db_session):
         """Test filtering events by date range"""
@@ -257,7 +257,7 @@ class TestEventsAPI:
             "title": "Test Event with JSON",
             "start_utc": "2025-09-02T08:00:00Z",
             "end_utc": "2025-09-02T09:00:00Z",
-            "kid_ids": ["1", "2", "3"],
+            "kid_ids": [1, 2, 3],
             "exdates": ["2025-10-01", "2025-11-01"],
             "category": "family",
             "source": "manual"
@@ -268,7 +268,7 @@ class TestEventsAPI:
         assert response.status_code == 201
         
         created_event = response.json()
-        assert created_event["kid_ids"] == ["1", "2", "3"]
+        assert created_event["kid_ids"] == [1, 2, 3]
         assert created_event["exdates"] == ["2025-10-01", "2025-11-01"]
         
         # Retrieve event
@@ -277,5 +277,5 @@ class TestEventsAPI:
         assert response.status_code == 200
         
         retrieved_event = response.json()
-        assert retrieved_event["kid_ids"] == ["1", "2", "3"]
+        assert retrieved_event["kid_ids"] == [1, 2, 3]
         assert retrieved_event["exdates"] == ["2025-10-01", "2025-11-01"]
