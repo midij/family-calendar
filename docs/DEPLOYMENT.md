@@ -89,9 +89,9 @@ docker-compose -f docker-compose.prod.yml exec family-calendar python seed_data.
 ```
 
 ### Access Your Application
-- **Wall Display**: `https://localhost/frontend/wall.html`
-- **Admin Interface**: `https://localhost/frontend/admin.html`
-- **Health Check**: `https://localhost/health`
+- **Wall Display**: `https://localhost:8443/frontend/wall.html`
+- **Admin Interface**: `https://localhost:8443/frontend/admin.html`
+- **Health Check**: `https://localhost:8443/health`
 
 ### Management Commands
 ```bash
@@ -228,16 +228,16 @@ chmod +x monitor.sh
 After Docker deployment, your devices can access:
 
 ### Wall Display (Tablet)
-- **URL**: `https://localhost/frontend/wall.html` (or your domain)
+- **URL**: `https://localhost:8443/frontend/wall.html` (or your domain:8443)
 - **Purpose**: Full-screen calendar display for wall-mounted tablets
 
 ### Admin Interface (Phone/Computer)
-- **URL**: `https://localhost/frontend/admin.html` (or your domain)
+- **URL**: `https://localhost:8443/frontend/admin.html` (or your domain:8443)
 - **Purpose**: Event and kid management interface
 
 ### API Endpoints
-- **Base URL**: `https://localhost/v1/` (or your domain)
-- **Health Check**: `https://localhost/health` (or your domain)
+- **Base URL**: `https://localhost:8443/v1/` (or your domain:8443)
+- **Health Check**: `https://localhost:8443/health` (or your domain:8443)
 
 ## Troubleshooting
 
@@ -275,7 +275,7 @@ After Docker deployment, your devices can access:
 4. **Health check fails**
    ```bash
    # Test health endpoint directly
-   curl -k https://localhost/health
+   curl -k https://localhost:8443/health
    
    # Check container status
    docker-compose -f docker-compose.prod.yml ps

@@ -42,9 +42,11 @@ The script will automatically:
 ### Step 3: Access Your Calendar
 
 After deployment, access your calendar at:
-- **Wall Display**: `https://localhost/frontend/wall.html`
-- **Admin Interface**: `https://localhost/frontend/admin.html`
-- **Health Check**: `https://localhost/health`
+- **Wall Display**: `https://localhost:8443/frontend/wall.html`
+- **Admin Interface**: `https://localhost:8443/frontend/admin.html`
+- **Health Check**: `https://localhost:8443/health`
+
+**Note**: The deployment uses ports 8080 (HTTP) and 8443 (HTTPS) to avoid conflicts with other services that might be using the standard ports 80/443.
 
 ## Manual Docker Deployment (Alternative)
 
@@ -72,9 +74,9 @@ docker-compose -f docker-compose.prod.yml exec family-calendar python seed_data.
 ```
 
 ### Access Your Application
-- **Wall Display**: `https://localhost/frontend/wall.html`
-- **Admin Interface**: `https://localhost/frontend/admin.html`
-- **Health Check**: `https://localhost/health`
+- **Wall Display**: `https://localhost:8443/frontend/wall.html`
+- **Admin Interface**: `https://localhost:8443/frontend/admin.html`
+- **Health Check**: `https://localhost:8443/health`
 
 ## Post-Deployment Configuration
 
@@ -171,7 +173,7 @@ openssl req -x509 -newkey rsa:4096 -keyout ssl/key.pem -out ssl/cert.pem -days 3
 **Health check fails:**
 ```bash
 # Test health endpoint
-curl -k https://localhost/health
+curl -k https://localhost:8443/health
 
 # Check container status
 docker-compose -f docker-compose.prod.yml ps
@@ -201,7 +203,7 @@ The Nginx configuration already includes caching for static files.
 For issues or questions:
 
 1. Check container logs: `docker-compose -f docker-compose.prod.yml logs -f`
-2. Test health endpoint: `curl -k https://localhost/health`
+2. Test health endpoint: `curl -k https://localhost:8443/health`
 3. Check container status: `docker-compose -f docker-compose.prod.yml ps`
 4. Check the full deployment guide: `docs/DEPLOYMENT.md`
 
