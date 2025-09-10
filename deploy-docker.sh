@@ -92,26 +92,29 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     docker-compose -f $COMPOSE_FILE exec family-calendar python seed_data.py
 fi
 
-# Health check
-echo "🏥 Running health check..."
-sleep 5
-
-# Use ports 8080/8443 to avoid conflicts with other services
-echo "🔌 Using ports 8080 (HTTP) and 8443 (HTTPS) to avoid port conflicts"
-HEALTH_URL_HTTP="http://localhost:8080/health"
-HEALTH_URL_HTTPS="https://localhost:8443/health"
-WALL_URL="https://localhost:8443/frontend/wall.html"
-ADMIN_URL="https://localhost:8443/frontend/admin.html"
-
-if curl -f -s -k $HEALTH_URL_HTTPS > /dev/null 2>&1; then
-    echo "✅ Health check passed (HTTPS on port 8443)"
-elif curl -f -s $HEALTH_URL_HTTP > /dev/null 2>&1; then
-    echo "✅ Health check passed (HTTP on port 8080)"
+# Health check (skip for production)
+if [ "$ENVIRONMENT" = "development" ]; then
+    echo "🏥 Running health check..."
+    sleep 5
+    
+    # Use ports 8080/8443 to avoid conflicts with other services
+    echo "🔌 Using ports 8080 (HTTP) and 8443 (HTTPS) to avoid port conflicts"
+    HEALTH_URL_HTTP="http://localhost:8080/health"
+    HEALTH_URL_HTTPS="https://localhost:8443/health"
+    
+    if curl -f -s -k $HEALTH_URL_HTTPS > /dev/null 2>&1; then
+        echo "✅ Health check passed (HTTPS on port 8443)"
+    elif curl -f -s $HEALTH_URL_HTTP > /dev/null 2>&1; then
+        echo "✅ Health check passed (HTTP on port 8080)"
+    else
+        echo "❌ Health check failed"
+        echo "Container logs:"
+        docker-compose -f $COMPOSE_FILE logs --tail=20
+        exit 1
+    fi
 else
-    echo "❌ Health check failed"
-    echo "Container logs:"
-    docker-compose -f $COMPOSE_FILE logs --tail=20
-    exit 1
+    echo "⏭️  Skipping health check for production deployment"
+    echo "💡 You can manually test the application after deployment"
 fi
 
 # Display deployment info
@@ -119,9 +122,13 @@ echo ""
 echo "🎉 Docker deployment completed successfully!"
 echo ""
 echo "📱 Access URLs:"
-echo "  Wall Display: $WALL_URL"
-echo "  Admin Interface: $ADMIN_URL"
-echo "  Health Check: $HEALTH_URL_HTTPS"
+echo "  Wall Display: https://localhost:8443/frontend/wall.html"
+echo "  Admin Interface: https://localhost:8443/frontend/admin.html"
+echo "  Health Check: https://localhost:8443/health"
+echo ""
+echo "💡 For production deployments:"
+echo "   Replace 'localhost' with your server's IP address or hostname"
+echo "   Example: https://192.168.1.142:8443/frontend/wall.html"
 echo ""
 echo "🔧 Management Commands:"
 echo "  View logs: docker-compose -f $COMPOSE_FILE logs -f"
