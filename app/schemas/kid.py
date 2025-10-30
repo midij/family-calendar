@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
 import re
@@ -8,13 +8,15 @@ class KidBase(BaseModel):
     color: str = Field(..., pattern=r'^#[0-9A-Fa-f]{6}$', description="Color in hex format (e.g., #FF0000)")
     avatar: Optional[str] = Field(None, description="Avatar URL")
     
-    @validator('name')
+    @field_validator('name')
+    @classmethod
     def name_must_not_be_empty(cls, v):
         if not v or not v.strip():
             raise ValueError('Name cannot be empty')
         return v.strip()
     
-    @validator('avatar')
+    @field_validator('avatar')
+    @classmethod
     def avatar_must_be_valid_url(cls, v):
         if v is not None and v.strip():
             # Basic URL validation
@@ -30,13 +32,15 @@ class KidUpdate(BaseModel):
     color: Optional[str] = Field(None, pattern=r'^#[0-9A-Fa-f]{6}$', description="Color in hex format (e.g., #FF0000)")
     avatar: Optional[str] = Field(None, description="Avatar URL")
     
-    @validator('name')
+    @field_validator('name')
+    @classmethod
     def name_must_not_be_empty(cls, v):
         if v is not None and (not v or not v.strip()):
             raise ValueError('Name cannot be empty')
         return v.strip() if v else v
     
-    @validator('avatar')
+    @field_validator('avatar')
+    @classmethod
     def avatar_must_be_valid_url(cls, v):
         if v is not None and v.strip():
             # Basic URL validation

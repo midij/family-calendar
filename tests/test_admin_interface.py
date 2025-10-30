@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timedelta
 
 
-class TestAdminInterface:
+class AdminInterfaceTester:
     """Test suite for Admin Interface functionality"""
     
     def __init__(self):
@@ -294,8 +294,9 @@ class TestAdminInterface:
 
 def test_admin_interface():
     """Main test function for admin interface"""
-    tester = TestAdminInterface()
-    return tester.run_all_tests()
+    tester = AdminInterfaceTester()
+    result = tester.run_all_tests()
+    assert result is True, "Admin interface tests failed"
 
 
 if __name__ == "__main__":
