@@ -135,7 +135,7 @@ This method installs everything directly on your server with systemd and Nginx. 
 
 ```bash
 # Download the script
-curl -sSL https://raw.githubusercontent.com/you/family-calendar/main/deploy.sh -o deploy.sh
+curl -sSL https://raw.githubusercontent.com/midij/family-calendar/main/deploy.sh -o deploy.sh
 
 # Make executable and run
 chmod +x deploy.sh && ./deploy.sh production
