@@ -86,9 +86,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 ## Deploying to a Server
 
-There are two deployment options: **Docker deployment** (recommended) or **bare-metal deployment**.
-
-### Option 1: Docker Deployment (Recommended)
+### Docker Deployment
 
 This is the easiest and most reliable method. It uses containerization without modifying your system.
 
@@ -122,47 +120,9 @@ The script will:
 
 **Note:** The deployment uses self-signed SSL certificates. For production, replace `ssl/cert.pem` and `ssl/key.pem` with real certificates from Let's Encrypt or your certificate provider.
 
-### Option 2: Bare-Metal Deployment
-
-This method installs everything directly on your server with systemd and Nginx.
-
-**Prerequisites:**
-- Ubuntu/Debian server
-- Sudo privileges
-- Ports 80 and 443 available
-
-**Deploy:**
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd family-calendar
-
-# Run the deployment script
-./deploy.sh production
-```
-
-The script will:
-- Install system dependencies (Python, Nginx, UFW, Certbot)
-- Create a systemd service
-- Configure Nginx as a reverse proxy
-- Set up firewall rules
-- Configure logging and log rotation
-
-**Access your application:**
-- Wall Display: `http://YOUR_SERVER_IP/frontend/wall.html`
-- Admin Interface: `http://YOUR_SERVER_IP/frontend/admin.html`
-
-**Next steps for production:**
-1. Configure your domain in `/etc/nginx/sites-available/family-calendar`
-2. Set up SSL: `sudo certbot --nginx -d yourdomain.com`
-3. Update CORS settings in `/opt/family-calendar/.env`
-
 ## Updating an Existing Deployment
 
 When you have new changes from the repository and want to update your deployed application **without losing data**, follow these steps:
-
-### For Docker Deployments
 
 ```bash
 # 1. Navigate to your project directory
@@ -186,35 +146,6 @@ docker-compose -f docker-compose.prod.yml ps
 ```
 
 **Important:** Your data is safe because it's stored in the `./data` volume, which persists across container rebuilds.
-
-### For Bare-Metal Deployments
-
-```bash
-# 1. Navigate to your project directory
-cd /opt/family-calendar
-
-# 2. (Optional but recommended) Backup your data first
-~/family-calendar/backup-data.sh
-
-# 3. Pull the latest changes
-git pull origin main
-
-# 4. Update Python dependencies
-source venv/bin/activate
-pip install -r requirements.txt
-
-# 5. Run any new database migrations
-alembic upgrade head
-
-# 6. Restart the service
-sudo systemctl restart family-calendar
-sudo systemctl status family-calendar
-
-# 7. Check the logs if needed
-sudo journalctl -u family-calendar -f
-```
-
-**Important:** Your database file `family_calendar.db` remains untouched during updates.
 
 ## Data Backup and Restore
 
@@ -240,8 +171,6 @@ Backups are stored in `~/family-calendar-backups/` with timestamps (e.g., `famil
 
 ### Restore from Backup
 
-**For Docker deployments:**
-
 ```bash
 # Stop the application
 docker-compose -f docker-compose.prod.yml down
@@ -251,19 +180,6 @@ cp ~/family-calendar-backups/family_calendar_YYYYMMDD.db ./data/family_calendar.
 
 # Restart the application
 docker-compose -f docker-compose.prod.yml up -d
-```
-
-**For bare-metal deployments:**
-
-```bash
-# Stop the service
-sudo systemctl stop family-calendar
-
-# Restore the database
-cp ~/family-calendar-backups/family_calendar_YYYYMMDD.db /opt/family-calendar/family_calendar.db
-
-# Start the service
-sudo systemctl start family-calendar
 ```
 
 ## Project Structure
@@ -286,15 +202,12 @@ family-calendar/
 ├── docker-compose.prod.yml   # Production Docker setup
 ├── Dockerfile                # Development Dockerfile
 ├── Dockerfile.prod           # Production Dockerfile
-├── deploy-docker.sh          # Docker deployment script
-├── deploy.sh                 # Bare-metal deployment script
+├── deploy-docker.sh          # Deployment script
 ├── backup-data.sh            # Database backup script
 └── requirements.txt          # Python dependencies
 ```
 
 ## Management Commands
-
-### Docker Deployments
 
 ```bash
 # View logs
@@ -308,22 +221,6 @@ docker-compose -f docker-compose.prod.yml restart
 
 # Check container status
 docker-compose -f docker-compose.prod.yml ps
-```
-
-### Bare-Metal Deployments
-
-```bash
-# View logs
-sudo journalctl -u family-calendar -f
-
-# Check service status
-sudo systemctl status family-calendar
-
-# Restart service
-sudo systemctl restart family-calendar
-
-# Check Nginx status
-sudo systemctl status nginx
 ```
 
 ## Troubleshooting
