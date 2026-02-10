@@ -131,7 +131,17 @@ This method installs everything directly on your server with systemd and Nginx. 
 - Sudo privileges
 - Ports 80 and 443 available
 
-**Deploy:**
+**Deploy (Method 1 - Direct download):**
+
+```bash
+# Download the script
+curl -sSL https://raw.githubusercontent.com/you/family-calendar/main/deploy.sh -o deploy.sh
+
+# Make executable and run
+chmod +x deploy.sh && ./deploy.sh production
+```
+
+**Deploy (Method 2 - Clone repository):**
 
 ```bash
 # Clone the repository
