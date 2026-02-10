@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Family Calendar - Wall Display</title>
-    <!-- Cache buster: v5 - 2025-10-30 16:37 - Fixed legend duplicates and scrolling -->
-    <script>
-        // Force cache invalidation
-        console.log('=== CACHE BUSTER v5 - 2025-10-30 16:37 ===');
-    </script>
-    <!-- Updated: Enhanced version with all features -->
+    
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/main.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/main.min.css" rel="stylesheet">
+    
     <style>
         * {
             margin: 0;
@@ -18,1852 +18,417 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            color: #333;
-            overflow: hidden;
-            height: 100vh;
-            /* Tablet optimizations */
-            -webkit-touch-callout: none; /* Disable callout on iOS */
-            -webkit-user-select: none; /* Disable text selection */
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            touch-action: manipulation; /* Prevent double-tap zoom */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
         }
 
-        .calendar-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            padding: clamp(10px, 2vw, 20px);
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 20px;
         }
 
-        /* Header */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(255, 255, 255, 0.95);
-            padding: clamp(10px, 2vw, 15px) clamp(15px, 3vw, 25px);
-            border-radius: clamp(8px, 1.5vw, 12px);
-            margin-bottom: clamp(10px, 2vw, 15px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
             flex-wrap: wrap;
             gap: 15px;
         }
 
-        .title-section {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
         .title {
-            font-size: clamp(20px, 3.5vw, 28px);
+            font-size: 32px;
             font-weight: bold;
             color: #2c3e50;
-            white-space: nowrap;
         }
 
-        /* Color Legend - Scrollable and Compact */
-        .color-legend {
+        .controls {
             display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+            gap: 10px;
             align-items: center;
-            max-height: 60px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding: 4px 0;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #3182ce;
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        /* Color Legend */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: clamp(11px, 1.8vw, 13px);
-            color: #2c3e50;
-            white-space: nowrap;
+            gap: 8px;
+            font-size: 14px;
+            color: #2d3748;
         }
 
         .legend-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 3px;
-            border: 2px solid #fff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .navigation {
-            display: flex;
-            gap: clamp(10px, 2vw, 15px);
-            align-items: center;
-        }
-
-        .nav-button {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: clamp(8px, 1.5vw, 12px) clamp(15px, 3vw, 20px);
-            border-radius: clamp(6px, 1vw, 8px);
-            font-size: clamp(14px, 2.5vw, 18px);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .nav-button:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-        }
-
-        .nav-button:active {
-            transform: translateY(0);
-        }
-
-        .current-week {
-            font-size: clamp(16px, 3vw, 24px);
-            font-weight: 600;
-            color: #2c3e50;
-            min-width: clamp(200px, 30vw, 300px);
-            text-align: center;
-        }
-
-        /* Main Calendar Grid */
-        .calendar-grid {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 80px repeat(7, 1fr);
-            grid-template-rows: 60px auto;
-            gap: 2px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: clamp(8px, 1.5vw, 12px);
-            padding: 2px;
-            overflow-y: auto; /* Enable vertical scrolling */
-            overflow-x: hidden; /* Prevent horizontal scroll */
-            min-height: 0; /* Allow flex shrinking */
-            max-height: calc(100vh - 180px); /* Reserve space for header */
-        }
-
-        /* Time Column Header */
-        .time-header {
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: clamp(12px, 2vw, 16px);
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        /* Day Headers */
-        .day-header {
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: clamp(14px, 2.5vw, 18px);
-            font-weight: bold;
-            color: #2c3e50;
-            padding: clamp(5px, 1vw, 8px);
-        }
-
-        .day-name {
-            font-size: clamp(12px, 2vw, 16px);
-            margin-bottom: 2px;
-        }
-
-        .day-number {
-            font-size: clamp(16px, 3vw, 22px);
-        }
-
-        .today {
-            background: #e74c3c;
-            color: white;
-        }
-
-        /* Time Column */
-        .time-column {
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .time-slot {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: clamp(10px, 1.8vw, 14px);
-            color: #7f8c8d;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            height: 40px; /* Fixed height to match TIME_SLOT_HEIGHT */
-            position: relative;
-        }
-
-        .time-slot::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            height: 1px;
-            background: rgba(0, 0, 0, 0.1);
-        }
-
-        /* Day Columns */
-        .day-column {
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            min-height: min-content; /* Ensure proper height calculation */
-            overflow: visible; /* Allow events to be visible */
-        }
-
-        .day-slot {
-            flex: 1;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            position: relative;
-            min-height: 40px;
-        }
-
-        /* Child Tracks */
-        .child-track {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .child-track-slot {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            position: relative;
-            height: 40px; /* Fixed height to match TIME_SLOT_HEIGHT */
-        }
-
-        /* Enhanced Event Cards */
-        .event-card {
-            position: absolute;
-            left: 2px;
-            right: 2px;
-            background: #3498db;
-            color: white;
-            border-radius: 6px;
-            padding: clamp(6px, 1vw, 8px);
-            font-size: clamp(11px, 1.8vw, 14px);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            border-left: 4px solid rgba(255, 255, 255, 0.3);
-            z-index: 10;
-        }
-
-        .event-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            z-index: 20;
-        }
-
-        .event-card.overlapping {
-            width: calc(50% - 1px);
-            z-index: 15;
-        }
-
-        .event-card.overlapping:nth-child(even) {
-            left: calc(50% + 1px);
-        }
-
-        .event-card.overlapping:nth-child(odd) {
-            left: 2px;
-        }
-
-        .event-card.family {
-            background: #e74c3c;
-        }
-
-        .event-card.after-school {
-            background: #f39c12;
-        }
-
-        .event-card.imported {
-            background: #9b59b6;
-        }
-
-        .event-card.manual {
-            background: #3498db;
-        }
-
-        .event-card.outside-range {
-            background: #95a5a6;
-            opacity: 0.7;
-        }
-
-        .event-card.outside-range::before {
-            content: '🌙';
-            margin-right: 4px;
-        }
-
-        /* Event Card Content */
-        .event-title {
-            font-weight: 600;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .event-time {
-            font-size: clamp(9px, 1.5vw, 12px);
-            opacity: 0.9;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .event-location {
-            font-size: clamp(8px, 1.3vw, 11px);
-            opacity: 0.8;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-top: 2px;
-        }
-
-        /* Loading and Error States */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            font-size: clamp(18px, 3vw, 24px);
-            color: white;
-        }
-
-        .error {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            font-size: clamp(16px, 2.5vw, 20px);
-            color: #e74c3c;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            margin: 20px;
-            padding: 20px;
-        }
-
-        /* Status Bar */
-        .status-bar {
+        /* Status */
+        .status {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(255, 255, 255, 0.9);
-            padding: clamp(8px, 1.5vw, 12px);
-            border-radius: clamp(6px, 1vw, 8px);
-            margin-top: clamp(10px, 2vw, 15px);
-            font-size: clamp(12px, 2vw, 16px);
+            padding: 10px 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #718096;
         }
 
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-indicator {
-            width: 12px;
-            height: 12px;
+        .status-dot {
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            background: #27ae60;
+            background: #48bb78;
+            display: inline-block;
+            margin-right: 5px;
         }
 
-        .status-indicator.offline {
-            background: #e74c3c;
+        /* FullCalendar Customizations */
+        #calendar {
+            margin-top: 20px;
         }
 
-        .status-indicator.retrying {
-            background: #f39c12;
-            animation: pulse 1s infinite;
+        .fc {
+            font-size: 14px;
         }
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+        .fc-event {
+            border-radius: 4px;
+            padding: 2px 4px;
+            border: none !important;
+            font-weight: 500;
         }
 
-        .last-updated {
-            color: #7f8c8d;
+        .fc-timegrid-slot {
+            height: 40px;
         }
 
-        /* Event Modal */
-        .event-modal {
+        .fc-toolbar-title {
+            font-size: 24px !important;
+            color: #2c3e50;
+        }
+
+        /* Loading overlay */
+        .loading {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: none;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 9999;
         }
 
-        .event-modal.show {
-            display: flex;
-        }
-
-        .event-modal-content {
+        .loading-spinner {
             background: white;
             padding: 30px;
             border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .event-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .event-modal-title {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 18px;
             color: #2c3e50;
         }
 
-        .event-modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #7f8c8d;
-        }
-
-        .event-modal-close:hover {
-            color: #e74c3c;
-        }
-
-        .event-modal-info {
-            margin-bottom: 15px;
-        }
-
-        .event-modal-label {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .event-modal-value {
-            color: #7f8c8d;
-            margin-bottom: 10px;
-        }
-
-        /* Time Range Expansion */
-        .time-range-expanded {
-            animation: expandTimeRange 0.5s ease-out;
-        }
-
-        @keyframes expandTimeRange {
-            from { transform: scaleY(0.8); opacity: 0.8; }
-            to { transform: scaleY(1); opacity: 1; }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .calendar-grid {
-                grid-template-columns: 60px repeat(7, 1fr);
-            }
-            
-            .time-slot {
-                font-size: 10px;
-            }
-            
-            .event-card {
-                font-size: 10px;
-                padding: 4px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .calendar-grid {
-                grid-template-columns: 50px repeat(7, 1fr);
-            }
-            
-            .day-header {
-                padding: 2px;
-            }
-            
-            .day-name {
-                font-size: 10px;
-            }
-            
-            .day-number {
-                font-size: 14px;
-            }
-        }
-
-        /* Tablet Wall Display Optimizations */
-        @media (min-width: 768px) and (max-width: 1024px) {
-            /* Optimized for wall-hanging tablets */
-            .calendar-container {
-                padding: clamp(15px, 2.5vw, 25px);
-            }
-            
-            .header {
-                padding: clamp(20px, 4vw, 30px);
-                margin-bottom: clamp(15px, 3vw, 20px);
-            }
-            
-            .title {
-                font-size: clamp(28px, 5vw, 42px);
-            }
-            
-            .color-legend {
-                gap: clamp(8px, 1.5vw, 12px);
-            }
-            
-            .legend-item {
-                font-size: clamp(14px, 2.5vw, 18px);
-                padding: clamp(6px, 1vw, 10px) clamp(10px, 2vw, 16px);
-            }
-            
-            .calendar-grid {
-                gap: clamp(3px, 0.5vw, 6px);
-            }
-            
-            .day-header {
-                font-size: clamp(16px, 3vw, 20px);
-                padding: clamp(12px, 2vw, 16px) clamp(8px, 1.5vw, 12px);
-            }
-            
-            .time-slot {
-                font-size: clamp(12px, 2vw, 14px);
-                padding: clamp(6px, 1vw, 8px) clamp(4px, 0.8vw, 6px);
-            }
-            
-            .event-card {
-                font-size: clamp(12px, 2vw, 14px);
-                padding: clamp(4px, 0.8vw, 6px) clamp(6px, 1vw, 8px);
-                margin: clamp(1px, 0.2vw, 2px);
-            }
-            
-            .event-title {
-                font-size: clamp(12px, 2vw, 14px);
-            }
-            
-            .event-time {
-                font-size: clamp(10px, 1.5vw, 12px);
-            }
-            
-            /* Larger touch targets for wall tablets */
-            .nav-button {
-                min-height: 48px;
-                min-width: 48px;
-                font-size: clamp(14px, 2.5vw, 18px);
-                padding: clamp(8px, 1.5vw, 12px) clamp(12px, 2vw, 16px);
-            }
-            
-            /* Hide admin button on wall tablets - they should be read-only */
-            .nav-button[href*="admin"] {
-                display: none;
-            }
-            
-            /* Fullscreen mode for wall tablets */
-            body {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                overflow: hidden;
-            }
-        }
-
-        /* Large Desktop Wall Display */
-        @media (min-width: 1025px) {
-            .calendar-container {
-                padding: clamp(20px, 3vw, 30px);
-            }
-            
-            .header {
-                padding: clamp(25px, 4vw, 35px);
-                margin-bottom: clamp(20px, 3vw, 25px);
-            }
-            
-            .title {
-                font-size: clamp(32px, 5vw, 48px);
-            }
-            
-            .legend-item {
-                font-size: clamp(16px, 2.5vw, 20px);
-            }
-            
-            .day-header {
-                font-size: clamp(18px, 3vw, 22px);
-            }
-            
-            .time-slot {
-                font-size: clamp(14px, 2vw, 16px);
-            }
-            
-            .event-card {
-                font-size: clamp(14px, 2vw, 16px);
-            }
-        }
-
-        /* Animation for updates */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .event-card.new {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        /* Auto-refresh indicator */
-        .auto-refresh {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .auto-refresh.show {
-            opacity: 1;
-        }
-
-        /* Performance indicator */
-        .performance-indicator {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .performance-indicator.show {
-            opacity: 1;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="calendar-container">
-        <!-- Header with Navigation -->
+    <div class="loading hidden" id="loading">
+        <div class="loading-spinner">Loading calendar...</div>
+    </div>
+
+    <div class="container">
         <div class="header">
-            <div class="title-section">
-                <div class="title">Family Calendar</div>
-                <div class="color-legend" id="colorLegend">
-                    <!-- Color legend will be populated by JavaScript -->
-                </div>
-            </div>
-            <div class="navigation">
-                <button class="nav-button" onclick="navigateWeek(-1)">← Last Week</button>
-                <div class="current-week" id="currentWeek">Loading...</div>
-                <button class="nav-button" onclick="navigateWeek(1)">Next Week →</button>
-                <button class="nav-button" onclick="goToToday().catch(console.error)">Today</button>
-                <a href="admin.html" class="nav-button" style="text-decoration: none; display: inline-block;">⚙️ Admin</a>
+            <div class="title">🏠 Family Calendar</div>
+            <div class="controls">
+                <a href="admin.html" class="btn btn-secondary">⚙️ Admin</a>
             </div>
         </div>
 
-        <!-- Main Calendar Grid -->
-        <div class="calendar-grid" id="calendarGrid">
-            <!-- Time column header -->
-            <div class="time-header">Time</div>
-            
-            <!-- Day headers -->
-            <div class="day-header" id="dayHeader0">
-                <div class="day-name">Mon</div>
-                <div class="day-number">1</div>
-            </div>
-            <div class="day-header" id="dayHeader1">
-                <div class="day-name">Tue</div>
-                <div class="day-number">2</div>
-            </div>
-            <div class="day-header" id="dayHeader2">
-                <div class="day-name">Wed</div>
-                <div class="day-number">3</div>
-            </div>
-            <div class="day-header" id="dayHeader3">
-                <div class="day-name">Thu</div>
-                <div class="day-number">4</div>
-            </div>
-            <div class="day-header" id="dayHeader4">
-                <div class="day-name">Fri</div>
-                <div class="day-number">5</div>
-            </div>
-            <div class="day-header" id="dayHeader5">
-                <div class="day-name">Sat</div>
-                <div class="day-number">6</div>
-            </div>
-            <div class="day-header" id="dayHeader6">
-                <div class="day-name">Sun</div>
-                <div class="day-number">7</div>
-            </div>
-
-            <!-- Time column -->
-            <div class="time-column" id="timeColumn">
-                <!-- Time slots will be generated by JavaScript -->
-            </div>
-
-            <!-- Day columns -->
-            <div class="day-column" id="dayColumn0">
-                <!-- Day slots will be generated by JavaScript -->
-            </div>
-            <div class="day-column" id="dayColumn1">
-                <!-- Day slots will be generated by JavaScript -->
-            </div>
-            <div class="day-column" id="dayColumn2">
-                <!-- Day slots will be generated by JavaScript -->
-            </div>
-            <div class="day-column" id="dayColumn3">
-                <!-- Day slots will be generated by JavaScript -->
-            </div>
-            <div class="day-column" id="dayColumn4">
-                <!-- Day slots will be generated by JavaScript -->
-            </div>
-            <div class="day-column" id="dayColumn5">
-                <!-- Day slots will be generated by JavaScript -->
-            </div>
-            <div class="day-column" id="dayColumn6">
-                <!-- Day slots will be generated by JavaScript -->
-            </div>
+        <div class="legend" id="legend">
+            <!-- Legend items will be populated by JavaScript -->
         </div>
 
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <div class="connection-status">
-                <div class="status-indicator" id="statusIndicator"></div>
-                <span id="connectionStatus">Connected</span>
-            </div>
-            <div class="last-updated" id="lastUpdated">Last updated: Never</div>
+        <div id="calendar"></div>
+
+        <div class="status">
+            <div><span class="status-dot"></span>Connected</div>
+            <div id="lastUpdate">Last updated: Never</div>
         </div>
     </div>
 
-    <!-- Auto-refresh indicator -->
-    <div class="auto-refresh" id="autoRefresh">Updating...</div>
-
-    <!-- Performance indicator -->
-    <div class="performance-indicator" id="performanceIndicator">Render: 0ms</div>
-
-    <!-- Event Modal -->
-    <div class="event-modal" id="eventModal">
-        <div class="event-modal-content">
-            <div class="event-modal-header">
-                <div class="event-modal-title" id="modalTitle">Event Details</div>
-                <button class="event-modal-close" onclick="closeEventModal()">&times;</button>
-            </div>
-            <div class="event-modal-info">
-                <div class="event-modal-label">Time:</div>
-                <div class="event-modal-value" id="modalTime">-</div>
-                
-                <div class="event-modal-label">Location:</div>
-                <div class="event-modal-value" id="modalLocation">-</div>
-                
-                <div class="event-modal-label">Category:</div>
-                <div class="event-modal-value" id="modalCategory">-</div>
-                
-                <div class="event-modal-label">Source:</div>
-                <div class="event-modal-value" id="modalSource">-</div>
-                
-                <div class="event-modal-label">Created:</div>
-                <div class="event-modal-value" id="modalCreated">-</div>
-                
-                <div class="event-modal-label">Kids:</div>
-                <div class="event-modal-value" id="modalKids">-</div>
-            </div>
-        </div>
-    </div>
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js"></script>
 
     <script>
-        // Configuration
         const API_BASE_URL = '/v1';
-        const REFRESH_INTERVAL = 10000; // 10 seconds
-        const MAX_RETRY_ATTEMPTS = 3;
-        const RETRY_DELAY_BASE = 1000; // 1 second base delay
-        const MAX_RETRY_DELAY = 30000; // 30 seconds max delay
-        const TIME_START = 6; // 6:00 AM (reasonable range for family calendar)
-        const TIME_END = 22; // 10:00 PM (reasonable range for family calendar)
-        const TIME_SLOT_HEIGHT = 40; // pixels per hour
-        const MIN_EVENT_HEIGHT = 20; // minimum height for events
-
-        // Global state
-        let currentWeekStart = null;
+        let calendar;
         let kids = [];
-        let events = [];
-        let lastVersion = null;
-        let refreshTimer = null;
+        let currentVersion = null;
 
-        // Helper function to safely parse UTC dates
-        function parseUTCDate(dateString) {
-            if (!dateString) {
-                throw new Error('Date string is null or undefined');
-            }
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
             try {
-                // Ensure the time string has 'Z' suffix for UTC interpretation
-                const timeStr = dateString.endsWith('Z') ? dateString : dateString + 'Z';
-                const date = new Date(timeStr);
-                if (isNaN(date.getTime())) {
-                    throw new Error(`Invalid date: ${dateString}`);
-                }
+                showLoading(true);
                 
-                // Debug: Log the conversion
-                console.log(`parseUTCDate: "${dateString}" -> "${timeStr}" -> ${date.toLocaleString()}`);
-                
-                return date;
-            } catch (error) {
-                throw new Error(`Error parsing date "${dateString}": ${error.message}`);
-            }
-        }
-
-        // Test function to verify timezone conversion
-        function testTimezoneConversion() {
-            console.log('=== TIMEZONE CONVERSION TEST ===');
-            const testTimes = [
-                '2025-09-09T15:30:00Z', // Dance Class - should be 8:30 AM PDT
-                '2025-09-08T15:00:00Z', // Piano Lesson - should be 8:00 AM PDT
-                '2025-09-09T10:09:00Z'  // oscar test - should be 3:09 AM PDT
-            ];
-            
-            testTimes.forEach(timeStr => {
-                const utcDate = parseUTCDate(timeStr);
-                const localHours = utcDate.getHours();
-                const localMinutes = utcDate.getMinutes();
-                const localTime = localHours + localMinutes / 60;
-                
-                console.log(`${timeStr}:`);
-                console.log(`  UTC: ${utcDate.toISOString()}`);
-                console.log(`  Local: ${utcDate.toLocaleString()}`);
-                console.log(`  Local time: ${localHours}:${localMinutes.toString().padStart(2, '0')} (${localTime})`);
-                console.log(`  Timezone offset: ${utcDate.getTimezoneOffset()} minutes`);
-                
-                // Test positioning calculation
-                const topOffset = (localTime - TIME_START) * TIME_SLOT_HEIGHT;
-                console.log(`  Expected position: top=${topOffset}px (${localTime} - ${TIME_START}) * ${TIME_SLOT_HEIGHT}`);
-            });
-            console.log('=== END TEST ===');
-        }
-
-        // Test function to verify event positioning
-        function testEventPositioning() {
-            console.log('=== EVENT POSITIONING TEST ===');
-            
-            // Test with Dance Class event
-            const danceClassEvent = {
-                title: 'Dance Class',
-                start_utc: '2025-09-09T15:30:00Z',
-                end_utc: '2025-09-09T16:30:00Z'
-            };
-            
-            try {
-                const startTimeUTC = parseUTCDate(danceClassEvent.start_utc);
-                const endTimeUTC = parseUTCDate(danceClassEvent.end_utc);
-                
-                const startTime = startTimeUTC.getHours() + startTimeUTC.getMinutes() / 60;
-                const endTime = endTimeUTC.getHours() + endTimeUTC.getMinutes() / 60;
-                
-                const topOffset = (startTime - TIME_START) * TIME_SLOT_HEIGHT;
-                const height = (endTime - startTime) * TIME_SLOT_HEIGHT;
-                
-                console.log(`Dance Class positioning test:`);
-                console.log(`  UTC: ${danceClassEvent.start_utc} -> ${danceClassEvent.end_utc}`);
-                console.log(`  Local: ${startTimeUTC.toLocaleString()} -> ${endTimeUTC.toLocaleString()}`);
-                console.log(`  startTime: ${startTime}, endTime: ${endTime}`);
-                console.log(`  topOffset: ${topOffset}px, height: ${height}px`);
-                console.log(`  Expected: 8:30 AM should be at ${(8.5 - TIME_START) * TIME_SLOT_HEIGHT}px`);
-                
-            } catch (error) {
-                console.error('Error in positioning test:', error);
-            }
-            
-            console.log('=== END POSITIONING TEST ===');
-        }
-
-        // Test markers removed - positioning is now working correctly
-        let isOnline = true;
-        let timeRangeExpanded = false;
-        let retryAttempts = 0;
-        let lastSuccessfulUpdate = null;
-        let cachedData = {
-            kids: [],
-            events: [],
-            timestamp: null
-        };
-
-        // Initialize the application
-        async function init() {
-            try {
-                console.log('Initializing Enhanced Family Calendar...');
-                console.log('Current date:', new Date().toLocaleString());
-                console.log('Current week start before loading:', currentWeekStart);
-                if (currentWeekStart) {
-                    console.log('Current week start details:', currentWeekStart.toLocaleString(), currentWeekStart.toISOString());
-                }
-                
-                console.log('Loading kids...');
+                // Load kids first to set up colors
                 await loadKids();
-                console.log('Kids loaded:', kids);
                 
-                console.log('Loading events...');
-                await loadEvents();
-                
-                // Test timezone conversion
-                testTimezoneConversion();
-                
-                // Test positioning for specific events
-                testEventPositioning();
-                
-                console.log('Events loaded:', events);
-                
-                console.log('Setting up time slots...');
-                setupTimeSlots();
-                
-                console.log('Setting up event polling...');
-                setupEventPolling();
-                
-                console.log('Updating display...');
-                console.log('Current date:', new Date());
-                console.log('Current week start:', currentWeekStart);
-                console.log('Current week start local:', currentWeekStart.toLocaleDateString());
-                updateDisplay();
-                
-                console.log('Enhanced initialization complete!');
-                
-                // Debug: Check day column contents
-                console.log('=== DEBUG: Day Column Contents ===');
-                for (let i = 0; i < 7; i++) {
-                    const dayCol = document.getElementById(`dayColumn${i}`);
-                    if (dayCol) {
-                        const slots = dayCol.querySelectorAll('.child-track-slot');
-                        console.log(`dayColumn${i}: ${slots.length} slots`);
-                        if (slots.length > 0) {
-                            const firstSlot = slots[0];
-                            console.log(`  First slot: data-day=${firstSlot.dataset.day}, data-hour=${firstSlot.dataset.hour}`);
-                        }
+                // Initialize FullCalendar
+                const calendarEl = document.getElementById('calendar');
+                calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'timeGridWeek',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'timeGridWeek,timeGridDay'
+                    },
+                    slotMinTime: '06:00:00',
+                    slotMaxTime: '22:00:00',
+                    slotDuration: '00:30:00',
+                    height: 'auto',
+                    allDaySlot: false,
+                    nowIndicator: true,
+                    events: fetchEvents,
+                    eventClick: handleEventClick,
+                    eventDidMount: styleEvent,
+                    firstDay: 1, // Monday
+                    weekNumbers: false,
+                    slotLabelFormat: {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    },
+                    eventTimeFormat: {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
                     }
-                }
+                });
+                
+                calendar.render();
+                
+                showLoading(false);
+                
+                // Start polling for updates
+                startPolling();
+                
             } catch (error) {
-                console.error('Failed to initialize:', error);
-                showError('Failed to load calendar data: ' + error.message);
+                console.error('Failed to initialize calendar:', error);
+                showLoading(false);
+                alert('Failed to load calendar. Please refresh the page.');
             }
-        }
+        });
 
-        // Load kids data with retry logic
+        // Load kids data
         async function loadKids() {
-            const kidsData = await fetchWithRetry(`${API_BASE_URL}/kids/`, 'kids');
-            kids = kidsData;
-            console.log('Loaded kids:', kids.map(k => ({id: k.id, name: k.name})));
-            updateColorLegend();
-            return kidsData;
-        }
-
-        // Update color legend
-        function updateColorLegend() {
-            const legendContainer = document.getElementById('colorLegend');
-            if (!legendContainer) return;
-
-            legendContainer.innerHTML = '';
-            
-            // Get unique kids with events in current week
-            const kidsWithEvents = new Set();
-            events.forEach(event => {
-                if (event.kid_ids && Array.isArray(event.kid_ids)) {
-                    event.kid_ids.forEach(kidId => kidsWithEvents.add(kidId));
-                }
-            });
-            
-            // Remove duplicates and filter kids
-            const uniqueKids = [];
-            const seenIds = new Set();
-            const seenNames = new Set();
-            
-            kids.forEach(kid => {
-                // Skip duplicates by ID or name
-                if (seenIds.has(kid.id) || seenNames.has(kid.name)) {
-                    console.log(`Skipping duplicate kid: ${kid.name} (ID: ${kid.id})`);
-                    return;
-                }
-                
-                // Only show kids with events this week (or all if no events loaded yet)
-                if (events.length === 0 || kidsWithEvents.has(kid.id)) {
-                    seenIds.add(kid.id);
-                    seenNames.add(kid.name);
-                    uniqueKids.push(kid);
-                }
-            });
-            
-            console.log(`Displaying ${uniqueKids.length} unique kids in legend`);
-            
-            // Add unique kids to legend
-            uniqueKids.forEach(kid => {
-                const legendItem = document.createElement('div');
-                legendItem.className = 'legend-item';
-                
-                const colorBox = document.createElement('div');
-                colorBox.className = 'legend-color';
-                colorBox.style.backgroundColor = kid.color;
-                
-                const nameSpan = document.createElement('span');
-                nameSpan.textContent = kid.name;
-                
-                legendItem.appendChild(colorBox);
-                legendItem.appendChild(nameSpan);
-                legendContainer.appendChild(legendItem);
-            });
-            
-            // Add family/reminder events color if there are family events
-            const hasFamilyEvents = events.some(e => !e.kid_ids || e.kid_ids.length === 0 || e.kid_ids.length > 1);
-            if (hasFamilyEvents || events.length === 0) {
-                const familyLegendItem = document.createElement('div');
-                familyLegendItem.className = 'legend-item';
-                
-                const familyColorBox = document.createElement('div');
-                familyColorBox.className = 'legend-color';
-                familyColorBox.style.backgroundColor = '#9b59b6';
-                
-                const familyNameSpan = document.createElement('span');
-                familyNameSpan.textContent = 'Family/Reminder';
-                
-                familyLegendItem.appendChild(familyColorBox);
-                familyLegendItem.appendChild(familyNameSpan);
-                legendContainer.appendChild(familyLegendItem);
-            }
-        }
-
-        // Load events data with retry logic
-        async function loadEvents() {
-            if (!currentWeekStart) {
-                console.log('Setting currentWeekStart for the first time');
-                currentWeekStart = getWeekStart(new Date());
-                console.log('currentWeekStart set to:', currentWeekStart);
-            } else {
-                console.log('Using existing currentWeekStart:', currentWeekStart);
-            }
-            
-            const weekEnd = new Date(currentWeekStart);
-            weekEnd.setDate(weekEnd.getDate() + 6);
-            weekEnd.setHours(23, 59, 59, 999);
-            
-            const startParam = currentWeekStart.toISOString();
-            const endParam = weekEnd.toISOString();
-            
-            return await fetchWithRetry(`${API_BASE_URL}/events/?start=${startParam}&end=${endParam}`, 'events');
-        }
-
-        // Generic fetch function with retry logic and exponential backoff
-        async function fetchWithRetry(url, dataType, attempt = 1) {
             try {
-                console.log(`Fetching ${dataType} from ${url} (attempt ${attempt})`);
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => {
-                    console.log(`Timeout for ${url}`);
-                    controller.abort();
-                }, 10000); // 10 second timeout
+                const response = await fetch(`${API_BASE_URL}/kids/`);
+                if (!response.ok) throw new Error('Failed to fetch kids');
                 
-                const response = await fetch(url, {
-                    signal: controller.signal
-                });
+                kids = await response.json();
+                console.log('Loaded kids:', kids);
                 
-                clearTimeout(timeoutId);
+                // Update legend
+                const legendEl = document.getElementById('legend');
+                legendEl.innerHTML = kids.map(kid => `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: ${kid.color}"></div>
+                        <span>${kid.name}</span>
+                    </div>
+                `).join('');
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                console.log(`Successfully fetched ${dataType}:`, data);
-                
-                // Update global state
-                if (dataType === 'kids') {
-                    kids = data;
-                    cachedData.kids = data;
-                } else if (dataType === 'events') {
-                    events = data;
-                    cachedData.events = data;
-                }
-                
-                // Update cache timestamp
-                cachedData.timestamp = new Date().toISOString();
-                lastSuccessfulUpdate = new Date();
-                
-                // Reset retry attempts on success
-                retryAttempts = 0;
-                
-                console.log(`Loaded ${dataType}:`, data);
-                return data;
+                // Add "Family" category
+                legendEl.innerHTML += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #9f7aea"></div>
+                        <span>Family/Reminder</span>
+                    </div>
+                `;
                 
             } catch (error) {
-                console.error(`Error loading ${dataType} (attempt ${attempt}):`, error);
-                
-                if (attempt < MAX_RETRY_ATTEMPTS) {
-                    const delay = Math.min(
-                        RETRY_DELAY_BASE * Math.pow(2, attempt - 1),
-                        MAX_RETRY_DELAY
-                    );
-                    
-                    console.log(`Retrying in ${delay}ms...`);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    return await fetchWithRetry(url, dataType, attempt + 1);
-                } else {
-                    // Max retries reached, use cached data if available
-                    console.warn(`Max retries reached for ${dataType}, using cached data`);
-                    if (dataType === 'kids' && cachedData.kids.length > 0) {
-                        kids = cachedData.kids;
-                        showCacheIndicator();
-                    } else if (dataType === 'events' && cachedData.events.length > 0) {
-                        events = cachedData.events;
-                        showCacheIndicator();
-                    }
-                    retryAttempts = attempt;
-                    throw error;
-                }
+                console.error('Error loading kids:', error);
             }
         }
 
-        // Check for updates using version endpoint with retry logic
-        async function checkForUpdates() {
+        // Fetch events for FullCalendar
+        async function fetchEvents(info, successCallback, failureCallback) {
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout for version check
+                const start = info.start.toISOString();
+                const end = info.end.toISOString();
                 
-                const response = await fetch(`${API_BASE_URL}/events/version`, {
-                    signal: controller.signal
-                });
+                const response = await fetch(`${API_BASE_URL}/events/?start=${start}&end=${end}`);
+                if (!response.ok) throw new Error('Failed to fetch events');
                 
-                clearTimeout(timeoutId);
+                const events = await response.json();
+                console.log(`Fetched ${events.length} events`);
                 
-                if (!response.ok) {
-                    throw new Error(`Version check failed: ${response.status}`);
-                }
-                
-                const versionInfo = await response.json();
-                
-                if (lastVersion && versionInfo.last_updated !== lastVersion) {
-                    console.log('Updates detected, refreshing...');
-                    showAutoRefresh();
-                    await loadEvents();
-                    updateDisplay();
-                }
-                
-                lastVersion = versionInfo.last_updated;
-                updateLastUpdated(versionInfo.timestamp);
-                setConnectionStatus(true);
-                
-                // Reset retry attempts on successful version check
-                retryAttempts = 0;
-                
-            } catch (error) {
-                console.error('Error checking for updates:', error);
-                setConnectionStatus(false);
-                
-                // Increment retry attempts
-                retryAttempts++;
-                
-                // If we've failed multiple times, show cache indicator
-                if (retryAttempts >= 3) {
-                    showCacheIndicator();
-                }
-            }
-        }
-
-        // Setup automatic event polling
-        function setupEventPolling() {
-            // Check for updates every 10 seconds
-            refreshTimer = setInterval(checkForUpdates, REFRESH_INTERVAL);
-            
-            // Also check when page becomes visible
-            document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) {
-                    checkForUpdates();
-                }
-            });
-        }
-
-        // Setup time slots with dynamic range
-        function setupTimeSlots() {
-            console.log('Setting up time slots...');
-            const timeColumn = document.getElementById('timeColumn');
-            if (!timeColumn) {
-                console.error('timeColumn element not found!');
-                return;
-            }
-            timeColumn.innerHTML = '';
-
-            for (let hour = TIME_START; hour < TIME_END; hour++) {
-                const timeSlot = document.createElement('div');
-                timeSlot.className = 'time-slot';
-                timeSlot.textContent = `${hour.toString().padStart(2, '0')}:00`;
-                timeSlot.style.height = `${TIME_SLOT_HEIGHT}px`; // Ensure exact height
-                timeColumn.appendChild(timeSlot);
-                console.log(`Created time slot: ${hour}:00 at position ${(hour - TIME_START) * TIME_SLOT_HEIGHT}px`);
-            }
-
-            // Setup day slots for each day column
-            for (let day = 0; day < 7; day++) {
-                const dayColumn = document.getElementById(`dayColumn${day}`);
-                dayColumn.innerHTML = '';
-
-                // Create child tracks
-                kids.forEach((kid, kidIndex) => {
-                    const childTrack = document.createElement('div');
-                    childTrack.className = 'child-track';
-                    // childTrack.style.backgroundColor = `${kid.color}20`; // 20% opacity - removed to avoid covering background
-                    childTrack.style.borderLeft = `4px solid ${kid.color}`;
-
-                    for (let hour = TIME_START; hour < TIME_END; hour++) {
-                        const daySlot = document.createElement('div');
-                        daySlot.className = 'child-track-slot';
-                        daySlot.dataset.day = day;
-                        daySlot.dataset.hour = hour;
-                        daySlot.dataset.kidId = kid.id;
-                        childTrack.appendChild(daySlot);
-                    }
-
-                    dayColumn.appendChild(childTrack);
-                });
-            }
-        }
-
-        // Update the display
-        function updateDisplay() {
-            const startTime = performance.now();
-            updateWeekHeaders();
-            renderEvents();
-            const endTime = performance.now();
-            showPerformanceIndicator(endTime - startTime);
-        }
-
-        // Update week headers
-        function updateWeekHeaders() {
-            console.log('updateWeekHeaders called, currentWeekStart:', currentWeekStart);
-            if (!currentWeekStart) {
-                console.log('currentWeekStart is null, calling getWeekStart');
-                currentWeekStart = getWeekStart(new Date());
-                console.log('currentWeekStart set to:', currentWeekStart);
-            }
-
-            const weekEnd = new Date(currentWeekStart);
-            weekEnd.setDate(weekEnd.getDate() + 6);
-
-            // Update current week display
-            document.getElementById('currentWeek').textContent = 
-                `${formatDate(currentWeekStart)} - ${formatDate(weekEnd)}`;
-
-            // Update day headers
-            for (let day = 0; day < 7; day++) {
-                const dayDate = new Date(currentWeekStart);
-                dayDate.setDate(dayDate.getDate() + day);
-                
-                const dayHeader = document.getElementById(`dayHeader${day}`);
-                const dayName = dayHeader.querySelector('.day-name');
-                const dayNumber = dayHeader.querySelector('.day-number');
-                
-                dayName.textContent = dayDate.toLocaleDateString('en-US', { weekday: 'short' });
-                dayNumber.textContent = dayDate.getDate();
-                
-                console.log(`Day ${day}: ${dayDate.toLocaleDateString()} (${dayName.textContent})`);
-                
-                // Highlight today
-                const today = new Date();
-                if (isSameDay(dayDate, today)) {
-                    dayHeader.classList.add('today');
-                } else {
-                    dayHeader.classList.remove('today');
-                }
-            }
-        }
-
-        // Enhanced event rendering with overlap detection
-        function renderEvents() {
-            // Clear existing events
-            document.querySelectorAll('.event-card').forEach(card => card.remove());
-
-            // Filter events for current week
-            const weekEvents = events.filter(event => {
-                try {
-                    const eventDate = parseUTCDate(event.start_utc);
-                    const inWeek = isDateInWeek(eventDate, currentWeekStart);
+                // Transform events to FullCalendar format
+                const fcEvents = events.map(event => {
+                    const kidColors = event.kid_ids && event.kid_ids.length > 0
+                        ? event.kid_ids.map(kidId => {
+                            const kid = kids.find(k => k.id === kidId);
+                            return kid ? kid.color : null;
+                        }).filter(c => c)
+                        : [];
                     
-                    // Debug: Only log for the specific event we're debugging
-                    if (event.title === "oscar utc test") {
-                        console.log(`DEBUG: Event "${event.title}" filtering:`, {
-                            eventDate: eventDate.toISOString(),
-                            weekStart: currentWeekStart.toISOString(),
-                            inWeek: inWeek
-                        });
-                    }
+                    // Use first kid's color, or purple for family events
+                    const backgroundColor = kidColors.length > 0 ? kidColors[0] : '#9f7aea';
                     
-                    return inWeek;
-                } catch (error) {
-                    console.error(`Error filtering event "${event.title}":`, error);
-                    return false;
-                }
-            });
-
-
-            // Group events by day and time for overlap detection
-            const eventsByDay = {};
-            weekEvents.forEach(event => {
-                try {
-                    const eventDate = parseUTCDate(event.start_utc);
-                    const dayIndex = getDayIndex(eventDate, currentWeekStart);
-                    
-                    if (dayIndex >= 0 && dayIndex <= 6) {
-                        if (!eventsByDay[dayIndex]) {
-                            eventsByDay[dayIndex] = [];
+                    return {
+                        id: event.id,
+                        title: event.title,
+                        start: event.start_utc,
+                        end: event.end_utc,
+                        backgroundColor: backgroundColor,
+                        borderColor: backgroundColor,
+                        extendedProps: {
+                            location: event.location,
+                            category: event.category,
+                            kid_ids: event.kid_ids,
+                            kidColors: kidColors
                         }
-                        eventsByDay[dayIndex].push(event);
-                    }
-                } catch (error) {
-                    console.error(`Error processing event "${event.title}":`, error);
-                }
-            });
-
-            // Render events for each day with overlap handling
-            Object.keys(eventsByDay).forEach(dayIndex => {
-                const dayEvents = eventsByDay[dayIndex];
-                const overlappingGroups = detectOverlaps(dayEvents);
-                
-                overlappingGroups.forEach((group, groupIndex) => {
-                    group.forEach((event, eventIndex) => {
-                        renderEvent(event, group.length > 1, eventIndex);
-                    });
+                    };
                 });
-            });
+                
+                successCallback(fcEvents);
+                updateLastUpdateTime();
+                
+            } catch (error) {
+                console.error('Error fetching events:', error);
+                failureCallback(error);
+            }
         }
 
-        // Detect overlapping events
-        function detectOverlaps(events) {
-            if (events.length === 0) return [];
+        // Style events with multiple kids
+        function styleEvent(info) {
+            const kidColors = info.event.extendedProps.kidColors || [];
             
-            // Sort events by start time
-            const sortedEvents = events.sort((a, b) => {
+            // If multiple kids, add a gradient border
+            if (kidColors.length > 1) {
+                const gradient = `linear-gradient(to right, ${kidColors.join(', ')})`;
+                info.el.style.borderLeft = `4px solid`;
+                info.el.style.borderImage = gradient;
+                info.el.style.borderImageSlice = '1';
+            }
+        }
+
+        // Handle event click
+        function handleEventClick(info) {
+            const event = info.event;
+            const kids_names = event.extendedProps.kid_ids
+                ? event.extendedProps.kid_ids.map(id => {
+                    const kid = kids.find(k => k.id === id);
+                    return kid ? kid.name : `Kid ${id}`;
+                  }).join(', ')
+                : 'No kids assigned';
+            
+            const location = event.extendedProps.location || 'No location';
+            const start = event.start.toLocaleString();
+            const end = event.end ? event.end.toLocaleString() : 'N/A';
+            
+            alert(`
+Event: ${event.title}
+Kids: ${kids_names}
+Location: ${location}
+Start: ${start}
+End: ${end}
+            `.trim());
+        }
+
+        // Poll for updates
+        function startPolling() {
+            setInterval(async () => {
                 try {
-                    const dateA = parseUTCDate(a.start_utc);
-                    const dateB = parseUTCDate(b.start_utc);
-                    return dateA - dateB;
+                    const response = await fetch(`${API_BASE_URL}/events/version`);
+                    if (!response.ok) return;
+                    
+                    const data = await response.json();
+                    
+                    if (currentVersion === null) {
+                        currentVersion = data.version;
+                        return;
+                    }
+                    
+                    if (data.version !== currentVersion) {
+                        console.log('Version changed, refreshing events...');
+                        currentVersion = data.version;
+                        calendar.refetchEvents();
+                    }
+                    
                 } catch (error) {
-                    console.error('Error sorting events:', error);
-                    return 0;
+                    console.error('Error checking version:', error);
                 }
-            });
-            
-            const groups = [];
-            let currentGroup = [sortedEvents[0]];
-            
-            for (let i = 1; i < sortedEvents.length; i++) {
-                const currentEvent = sortedEvents[i];
-                const lastEventInGroup = currentGroup[currentGroup.length - 1];
-                
-                try {
-                    const currentStart = parseUTCDate(currentEvent.start_utc);
-                    const lastEnd = parseUTCDate(lastEventInGroup.end_utc);
-                    
-                    // Check if events overlap
-                    if (currentStart < lastEnd) {
-                        currentGroup.push(currentEvent);
-                    } else {
-                        groups.push(currentGroup);
-                        currentGroup = [currentEvent];
-                    }
-                } catch (error) {
-                    console.error('Error in overlap detection:', error);
-                    groups.push(currentGroup);
-                    currentGroup = [currentEvent];
-                }
-            }
-            
-            groups.push(currentGroup);
-            return groups;
+            }, 5000); // Check every 5 seconds
         }
 
-        // Enhanced event rendering
-        function renderEvent(event, isOverlapping = false, overlapIndex = 0) {
-            // Parse UTC time correctly using helper function
-            let eventDate;
-            try {
-                eventDate = parseUTCDate(event.start_utc);
-            } catch (error) {
-                console.error(`Error parsing start date for event "${event.title}":`, error);
-                return;
-            }
-            const dayIndex = getDayIndex(eventDate, currentWeekStart);
-            
-            // Debug: Only log for the specific event we're debugging
-            if (event.title === "oscar utc test") {
-                console.log(`DEBUG: renderEvent called for "${event.title}":`, {
-                    eventDate: eventDate.toISOString(),
-                    weekStart: currentWeekStart.toISOString(),
-                    dayIndex: dayIndex
-                });
-            }
-            
-            if (dayIndex < 0 || dayIndex > 6) {
-                if (event.title === "oscar utc test") {
-                    console.log(`DEBUG: REJECTED: dayIndex ${dayIndex} is out of range (0-6)`);
-                }
-                return;
-            }
-
-            // Convert UTC times to local time for positioning
-            let startTimeUTC, endTimeUTC;
-            try {
-                startTimeUTC = parseUTCDate(event.start_utc);
-                endTimeUTC = parseUTCDate(event.end_utc);
-            } catch (error) {
-                console.error(`Error parsing dates for event "${event.title}":`, error);
-                return;
-            }
-            
-            // Convert to local time for display
-            // Use getHours() and getMinutes() which automatically handle timezone conversion
-            const startTime = startTimeUTC.getHours() + startTimeUTC.getMinutes() / 60;
-            const endTime = endTimeUTC.getHours() + endTimeUTC.getMinutes() / 60;
-            
-            // Ensure we have valid time values
-            if (isNaN(startTime) || isNaN(endTime)) {
-                console.error(`Invalid time values for event "${event.title}": startTime=${startTime}, endTime=${endTime}`);
-                return;
-            }
-            
-            // Debug: Only log for the specific event we're debugging
-            if (event.title === "oscar utc test") {
-                console.log(`DEBUG: Time calculation for "${event.title}":`, {
-                    startTime: startTime,
-                    endTime: endTime,
-                    targetHour: Math.floor(startTime)
-                });
-            }
-            
-            
-
-            // Check if event is outside normal business hours (8:00-22:00) for styling
-            const isOutsideRange = startTime < 8 || endTime > 22;
-
-            // Find the appropriate child track
-            let targetTrack = null;
-            if (event.kid_ids && event.kid_ids.length > 0) {
-                const kidId = event.kid_ids[0]; // Use first kid ID
-                const targetHour = Math.floor(startTime);
-                
-                // Debug: Only log for the specific event we're debugging
-                if (event.title === "oscar utc test") {
-                    console.log(`DEBUG: Looking for kid track with ID: ${kidId} (type: ${typeof kidId}) in day ${dayIndex} at hour ${targetHour}`);
-                }
-                
-                // Find the specific slot for this kid, day, and hour
-                const dayColumn = document.getElementById(`dayColumn${dayIndex}`);
-                if (dayColumn) {
-                    const slots = dayColumn.querySelectorAll('.child-track-slot');
-                    
-                    // Debug: Only log for the specific event we're debugging
-                    if (event.title === "oscar utc test") {
-                        console.log(`DEBUG: Found ${slots.length} slots in day ${dayIndex}`);
-                        for (let i = 0; i < Math.min(slots.length, 5); i++) {
-                            const slot = slots[i];
-                            console.log(`  Slot ${i}: kidId=${slot.dataset.kidId}, day=${slot.dataset.day}, hour=${slot.dataset.hour}`);
-                        }
-                    }
-                    
-                    for (let slot of slots) {
-        if (parseInt(slot.dataset.kidId) === kidId && 
-            parseInt(slot.dataset.day) === dayIndex && 
-            parseInt(slot.dataset.hour) === targetHour) {
-                            targetTrack = slot;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // If no specific kid track, use the first track for this day and hour
-            if (!targetTrack) {
-                const dayColumn = document.getElementById(`dayColumn${dayIndex}`);
-                const targetHour = Math.floor(startTime);
-                
-                if (dayColumn) {
-                    // Find the first slot with the target hour in this specific day column
-                    const slots = dayColumn.querySelectorAll('.child-track-slot');
-                    
-                    for (let slot of slots) {
-                        if (parseInt(slot.dataset.day) === dayIndex && 
-                            parseInt(slot.dataset.hour) === targetHour) {
-                            targetTrack = slot;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (!targetTrack) {
-                // Only log rejection for the specific event we're debugging
-                if (event.title === "oscar utc test") {
-                    console.log(`DEBUG: REJECTED: No target track found for event "${event.title}"`);
-                }
-                return;
-            }
-
-            // Create event card
-            const eventCard = document.createElement('div');
-            eventCard.className = `event-card ${event.category} ${event.source}`;
-            
-            // Apply kid's color to the event
-            if (event.kid_ids && event.kid_ids.length > 0) {
-                // Find all valid kids for this event
-                const validKids = event.kid_ids
-                    .map(kidId => kids.find(k => String(k.id) === String(kidId)))
-                    .filter(kid => kid !== undefined);
-                
-                if (validKids.length > 0) {
-                    if (validKids.length === 1) {
-                        // Single kid - use their color
-                        const kid = validKids[0];
-                        eventCard.style.backgroundColor = kid.color; // Solid color
-                        eventCard.style.borderLeft = `4px solid ${kid.color}`;
-                        eventCard.style.color = 'white'; // White text for better contrast
-                    } else {
-                        // Multiple kids - use gradient or mixed color approach
-                        // For now, use the first kid's color but add a visual indicator
-                        const primaryKid = validKids[0];
-                        eventCard.style.backgroundColor = primaryKid.color; // Solid color
-                        eventCard.style.borderLeft = `4px solid ${primaryKid.color}`;
-                        eventCard.style.color = 'white'; // White text for better contrast
-                        
-                        // Add a small indicator for multiple kids
-                        const multiKidIndicator = document.createElement('div');
-                        multiKidIndicator.style.cssText = `
-                            position: absolute;
-                            top: 2px;
-                            right: 2px;
-                            width: 8px;
-                            height: 8px;
-                            background: linear-gradient(45deg, ${validKids.map(k => k.color).join(', ')});
-                            border-radius: 50%;
-                            border: 1px solid white;
-                        `;
-                        eventCard.appendChild(multiKidIndicator);
-                    }
-                } else {
-                    // No valid kids found - use default color
-                    eventCard.style.backgroundColor = '#e0e0e0'; // Solid gray
-                    eventCard.style.borderLeft = '4px solid #e0e0e0';
-                    eventCard.style.color = 'black'; // Black text for gray background
-                }
+        // Helper functions
+        function showLoading(show) {
+            const loadingEl = document.getElementById('loading');
+            if (show) {
+                loadingEl.classList.remove('hidden');
             } else {
-                // No kids assigned - use default color for family/reminder events
-                eventCard.style.backgroundColor = '#9b59b6'; // Solid purple
-                eventCard.style.borderLeft = '4px solid #9b59b6';
-                eventCard.style.color = 'white'; // White text for purple background
-            }
-            
-            if (isOverlapping) {
-                eventCard.classList.add('overlapping');
-            }
-            
-            if (isOutsideRange) {
-                eventCard.classList.add('outside-range');
-            }
-
-            // Create event card content
-            const eventTitle = document.createElement('div');
-            eventTitle.className = 'event-title';
-            eventTitle.textContent = event.title;
-            
-            const eventTime = document.createElement('div');
-            eventTime.className = 'event-time';
-            try {
-                const endDate = parseUTCDate(event.end_utc);
-                eventTime.textContent = `${formatTime(eventDate)} - ${formatTime(endDate)}`;
-            } catch (error) {
-                console.error(`Error formatting end time for event "${event.title}":`, error);
-                eventTime.textContent = `${formatTime(eventDate)} - Invalid time`;
-            }
-            
-            const eventLocation = document.createElement('div');
-            eventLocation.className = 'event-location';
-            eventLocation.textContent = event.location || 'No location';
-            
-            eventCard.appendChild(eventTitle);
-            eventCard.appendChild(eventTime);
-            eventCard.appendChild(eventLocation);
-
-            // Position the event card, handling out-of-range events
-            let topOffset, height;
-            
-            console.log(`  Positioning calculation for "${event.title}":`);
-            console.log(`    startTime: ${startTime}, endTime: ${endTime}`);
-            console.log(`    TIME_START: ${TIME_START}, TIME_END: ${TIME_END}`);
-            
-            if (startTime < TIME_START) {
-                // Event starts before visible range - show at top with special styling
-                topOffset = 0;
-                height = Math.max((Math.min(endTime, TIME_END) - TIME_START) * TIME_SLOT_HEIGHT, MIN_EVENT_HEIGHT);
-                eventCard.classList.add('outside-range');
-                console.log(`    Case 1: Before range - topOffset: ${topOffset}, height: ${height}`);
-            } else if (endTime > TIME_END) {
-                // Event ends after visible range - show at bottom with special styling
-                topOffset = (startTime - TIME_START) * TIME_SLOT_HEIGHT;
-                height = Math.max((TIME_END - startTime) * TIME_SLOT_HEIGHT, MIN_EVENT_HEIGHT);
-                eventCard.classList.add('outside-range');
-                console.log(`    Case 2: After range - topOffset: ${topOffset}, height: ${height}`);
-            } else {
-                // Event is within visible range
-                // Calculate position within the target time slot
-                const targetHour = Math.floor(startTime);
-                const minutesIntoHour = (startTime - targetHour) * 60;
-                topOffset = (minutesIntoHour / 60) * TIME_SLOT_HEIGHT;
-                height = Math.max((endTime - startTime) * TIME_SLOT_HEIGHT, MIN_EVENT_HEIGHT);
-                console.log(`    Case 3: Within range - targetHour: ${targetHour}, minutesIntoHour: ${minutesIntoHour}, topOffset: ${topOffset}, height: ${height}`);
-            }
-            
-            eventCard.style.top = `${topOffset}px`;
-            eventCard.style.height = `${height}px`;
-            console.log(`    Final CSS: top=${topOffset}px, height=${height}px`);
-            
-            // Add a visual indicator to help debug positioning
-            eventCard.setAttribute('data-debug', `UTC:${event.start_utc} Local:${startTimeUTC.toLocaleTimeString()} Pos:${topOffset}px`);
-            eventCard.style.zIndex = isOverlapping ? (15 + overlapIndex) : 10;
-            
-            console.log(`  Event "${event.title}" positioned: top=${topOffset}px, height=${height}px, zIndex=${eventCard.style.zIndex}`);
-
-            // Add click handler
-            eventCard.onclick = () => {
-                showEventModal(event);
-            };
-
-            // Append directly to the targetTrack (time-slot)
-            targetTrack.appendChild(eventCard);
-        }
-
-        // Show event modal
-        function showEventModal(event) {
-            const modal = document.getElementById('eventModal');
-            try {
-                const eventDate = parseUTCDate(event.start_utc);
-                const endDate = parseUTCDate(event.end_utc);
-                
-                document.getElementById('modalTitle').textContent = event.title;
-                document.getElementById('modalTime').textContent = 
-                    `${formatTime(eventDate)} - ${formatTime(endDate)}`;
-                document.getElementById('modalLocation').textContent = event.location || 'No location';
-                document.getElementById('modalCategory').textContent = event.category || 'Unknown';
-                document.getElementById('modalSource').textContent = event.source || 'Unknown';
-                document.getElementById('modalCreated').textContent = 
-                    new Date(event.created_at).toLocaleString();
-                
-                // Get kid names
-                let kidNames = 'None';
-                if (event.kid_ids && event.kid_ids.length > 0) {
-                    kidNames = event.kid_ids.map(kidId => {
-                    const kid = kids.find(k => k.id == kidId);
-                    return kid ? kid.name : `Unknown (${kidId})`;
-                }).join(', ');
-            }
-                document.getElementById('modalKids').textContent = kidNames;
-                
-                modal.classList.add('show');
-            } catch (error) {
-                console.error(`Error showing modal for event "${event.title}":`, error);
-                alert('Error displaying event details: ' + error.message);
+                loadingEl.classList.add('hidden');
             }
         }
 
-        // Close event modal
-        function closeEventModal() {
-            document.getElementById('eventModal').classList.remove('show');
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            document.getElementById('lastUpdate').textContent = `Last updated: ${timeStr}`;
         }
-
-        // Navigation functions
-        async function navigateWeek(direction) {
-            currentWeekStart = new Date(currentWeekStart);
-            currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
-            
-            // Reload events for the new week
-            await loadEvents();
-            updateDisplay();
-        }
-
-        async function goToToday() {
-            const today = new Date();
-            currentWeekStart = getWeekStart(today);
-            
-            // Reload events for the new week
-            await loadEvents();
-            updateDisplay();
-        }
-
-        // Utility functions
-        function getWeekStart(date) {
-            const weekStart = new Date(date);
-            const day = weekStart.getDay();
-            const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-            weekStart.setDate(diff);
-            weekStart.setHours(0, 0, 0, 0);
-            console.log(`getWeekStart: input date ${date.toLocaleDateString()}, day ${day}, calculated week start: ${weekStart.toLocaleDateString()}`);
-            return weekStart;
-        }
-
-        function getDayIndex(date, weekStart) {
-            // Both dates are in local time, so we can calculate the difference directly
-            const diffTime = date.getTime() - weekStart.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
-            
-            return diffDays;
-        }
-
-        function isDateInWeek(date, weekStart) {
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekEnd.getDate() + 6);
-            weekEnd.setHours(23, 59, 59, 999);
-            
-            // The date parameter is already a Date object created from UTC string
-            // JavaScript automatically converts it to local time when creating the Date object
-            // So we can compare directly with local week boundaries
-            
-            return date >= weekStart && date <= weekEnd;
-        }
-
-        function isSameDay(date1, date2) {
-            return date1.getDate() === date2.getDate() &&
-                   date1.getMonth() === date2.getMonth() &&
-                   date1.getFullYear() === date2.getFullYear();
-        }
-
-        function formatDate(date) {
-            return date.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric',
-                year: 'numeric'
-            });
-        }
-
-        function formatTime(date) {
-            return date.toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
-                minute: '2-digit',
-                hour12: true
-            });
-        }
-
-        function setConnectionStatus(online) {
-            isOnline = online;
-            const indicator = document.getElementById('statusIndicator');
-            const status = document.getElementById('connectionStatus');
-            
-            if (online) {
-                indicator.classList.remove('offline', 'retrying');
-                status.textContent = 'Connected';
-            } else {
-                indicator.classList.add('offline');
-                if (retryAttempts > 0) {
-                    status.textContent = `Retrying (${retryAttempts})`;
-                    indicator.classList.add('retrying');
-                } else {
-                    status.textContent = 'Offline';
-                }
-            }
-        }
-
-        function showCacheIndicator() {
-            const status = document.getElementById('connectionStatus');
-            if (cachedData.timestamp) {
-                const cacheTime = new Date(cachedData.timestamp);
-                status.textContent = `Cached (${cacheTime.toLocaleTimeString()})`;
-            } else {
-                status.textContent = 'No Data';
-            }
-        }
-
-        function updateLastUpdated(timestamp) {
-            const lastUpdated = document.getElementById('lastUpdated');
-            const date = new Date(timestamp);
-            lastUpdated.textContent = `Last updated: ${date.toLocaleTimeString()}`;
-        }
-
-        function showAutoRefresh() {
-            const indicator = document.getElementById('autoRefresh');
-            indicator.classList.add('show');
-            setTimeout(() => {
-                indicator.classList.remove('show');
-            }, 2000);
-        }
-
-        function showPerformanceIndicator(renderTime) {
-            const indicator = document.getElementById('performanceIndicator');
-            indicator.textContent = `Render: ${Math.round(renderTime)}ms`;
-            indicator.classList.add('show');
-            setTimeout(() => {
-                indicator.classList.remove('show');
-            }, 2000);
-        }
-
-        function showError(message) {
-            const calendarGrid = document.getElementById('calendarGrid');
-            calendarGrid.innerHTML = `<div class="error">${message}</div>`;
-        }
-
-        // Handle online/offline events
-        window.addEventListener('online', () => {
-            console.log('Network connection restored');
-            setConnectionStatus(true);
-            retryAttempts = 0; // Reset retry attempts
-            checkForUpdates();
-        });
-
-        window.addEventListener('offline', () => {
-            console.log('Network connection lost');
-            setConnectionStatus(false);
-            showCacheIndicator();
-        });
-
-        // Close modal when clicking outside
-        document.getElementById('eventModal').addEventListener('click', (e) => {
-            if (e.target.id === 'eventModal') {
-                closeEventModal();
-            }
-        });
-
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM Content Loaded - Starting initialization...');
-            try {
-                init();
-            } catch (error) {
-                console.error('Error during initialization:', error);
-                alert('Error initializing calendar: ' + error.message);
-            }
-        });
     </script>
 </body>
 </html>
