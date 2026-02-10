@@ -1,99 +1,246 @@
-# Family Calendar - Production Deployment Guide
+# Deployment Guide
 
-This guide covers deploying the Family Calendar system to a production server so that wall devices and phones can access the HTML interfaces.
+Comprehensive deployment documentation for Family Calendar.
 
 ## Table of Contents
-1. [Deployment Options](#deployment-options)
-2. [Server Requirements](#server-requirements)
-3. [Docker Deployment](#docker-deployment)
-4. [SSL/HTTPS Setup](#sslhttps-setup)
-5. [Monitoring & Logging](#monitoring--logging)
-6. [Troubleshooting](#troubleshooting)
 
-## Why Docker Deployment?
-
-Docker deployment is the recommended approach because it provides:
-
-- ✅ **Zero system changes** - No global packages or services installed
-- ✅ **Complete isolation** - Won't affect other applications on your server
-- ✅ **Easy cleanup** - Just `docker-compose down` to remove everything
-- ✅ **Production-ready** - Includes Nginx, SSL, health checks, and monitoring
-- ✅ **Portable** - Works on any system with Docker support
-- ✅ **Consistent** - Same environment across development, staging, and production
-
-## Server Requirements
-
-### Minimum Requirements
-- **OS**: Any Linux distribution with Docker support
-- **RAM**: 2GB minimum, 4GB recommended
-- **Storage**: 10GB minimum
-- **CPU**: 2 cores minimum
-- **Network**: Static IP address or domain name
-
-### Software Dependencies
-- **Docker** (for containerized deployment)
-- **Docker Compose** (for multi-container setup)
-- **Git** (for cloning repository)
-
-### Database
-- **SQLite** (embedded database - no separate installation needed)
-- **No database server required** - SQLite runs within the application container
-- **No passwords or authentication** - Simple file-based database
+- [Docker Deployment](#docker-deployment)
+- [Bare-Metal Deployment](#bare-metal-deployment)
+- [Updating Deployments](#updating-deployments)
+- [Backup and Restore](#backup-and-restore)
+- [Management Commands](#management-commands)
+- [Troubleshooting](#troubleshooting)
 
 ## Docker Deployment
 
-### Prerequisites
-- Docker and Docker Compose installed
-- Ports 80 and 443 available (or configure different ports)
-- Git installed
+This is the recommended deployment method using containerization without modifying your system.
 
-### Quick Start
+### Prerequisites
+
+- Ubuntu/Debian server
+- Docker and Docker Compose installed
+- Ports 8080 and 8443 available
+
+### Initial Deployment
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/your-username/family-calendar.git
+# Clone the repository
+git clone https://github.com/midij/family-calendar.git
 cd family-calendar
 
-# 2. Run Docker deployment script
-chmod +x deploy-docker.sh
+# Run the deployment script
 ./deploy-docker.sh production
 ```
 
-The deployment script will automatically:
+The script will:
 - Create necessary directories (`data`, `logs`, `ssl`)
 - Generate self-signed SSL certificates
-- Build and start Docker containers (app + nginx only)
-- Run database migrations (SQLite - no database server needed)
-- Set up health checks
-- Display access URLs and management commands
+- Build and start Docker containers
+- Run database migrations
+- Optionally seed sample data
 
-### Manual Docker Deployment
+### Access URLs
 
-If you prefer to run the deployment steps manually:
+- Wall Display: `https://YOUR_SERVER_IP:8443/frontend/wall.html`
+- Admin Interface: `https://YOUR_SERVER_IP:8443/frontend/admin.html`
+- Health Check: `https://YOUR_SERVER_IP:8443/health`
+
+### SSL Certificates
+
+The deployment uses self-signed SSL certificates. For production, replace `ssl/cert.pem` and `ssl/key.pem` with real certificates from Let's Encrypt or your certificate provider.
+
+## Bare-Metal Deployment
+
+This method installs everything directly on your server with systemd and Nginx. Ideal for traditional server setups or when you need more control over system configuration.
+
+### Prerequisites
+
+- Ubuntu/Debian server
+- Sudo privileges
+- Ports 80 and 443 available
+
+### Deployment Methods
+
+**Method 1: Direct download (no git clone needed)**
 
 ```bash
-# 1. Create necessary directories
-mkdir -p data logs ssl
+# Download the script
+curl -sSL https://raw.githubusercontent.com/midij/family-calendar/main/deploy.sh -o deploy.sh
 
-# 2. Create self-signed SSL certificate (for development)
-openssl req -x509 -newkey rsa:4096 -keyout ssl/key.pem -out ssl/cert.pem -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
-
-# 3. Start services
-docker-compose -f docker-compose.prod.yml up -d
-
-# 4. Run database migrations (SQLite - no database server needed)
-docker-compose -f docker-compose.prod.yml exec family-calendar alembic upgrade head
-
-# 5. Seed sample data (optional)
-docker-compose -f docker-compose.prod.yml exec family-calendar python seed_data.py
+# Make executable and run
+chmod +x deploy.sh && ./deploy.sh production
 ```
 
-### Access Your Application
-- **Wall Display**: `https://localhost:8443/frontend/wall.html`
-- **Admin Interface**: `https://localhost:8443/frontend/admin.html`
-- **Health Check**: `https://localhost:8443/health`
+**Method 2: Clone repository first**
 
-### Management Commands
+```bash
+# Clone the repository
+git clone https://github.com/midij/family-calendar.git
+cd family-calendar
+
+# Run the deployment script
+./deploy.sh production
+```
+
+### What the Script Does
+
+The script automatically:
+- Installs system dependencies (Python, Nginx, UFW, Certbot)
+- Creates `/opt/family-calendar` directory
+- Clones or updates the repository (includes `git pull` for updates!)
+- Creates Python virtual environment
+- Installs Python dependencies
+- Runs database migrations
+- Creates and starts systemd service
+- Configures Nginx as reverse proxy
+- Sets up firewall rules
+- Configures logging and log rotation
+
+### Access URLs
+
+- Wall Display: `http://YOUR_SERVER_IP/frontend/wall.html`
+- Admin Interface: `http://YOUR_SERVER_IP/frontend/admin.html`
+
+### Post-Deployment Configuration
+
+For production use with custom domain:
+
+1. Configure your domain in `/etc/nginx/sites-available/family-calendar`
+2. Set up SSL: `sudo certbot --nginx -d yourdomain.com`
+3. Update CORS settings in `/opt/family-calendar/.env`
+4. Restart the service: `sudo systemctl restart family-calendar`
+
+## Updating Deployments
+
+### Docker Updates
+
+```bash
+# 1. Navigate to your project directory
+cd family-calendar
+
+# 2. (Optional but recommended) Backup your data first
+./backup-data.sh
+
+# 3. Pull the latest changes
+git pull origin main
+
+# 4. Rebuild and restart containers
+docker-compose -f docker-compose.prod.yml down
+docker-compose -f docker-compose.prod.yml up -d --build
+
+# 5. Run any new database migrations
+docker-compose -f docker-compose.prod.yml exec family-calendar alembic upgrade head
+
+# 6. Verify the application is running
+docker-compose -f docker-compose.prod.yml ps
+```
+
+**Important:** Your data is safe because it's stored in the `./data` volume, which persists across container rebuilds.
+
+### Bare-Metal Updates
+
+**Automatic (Recommended):**
+
+The easiest way is to simply re-run the deployment script:
+
+```bash
+# 1. (Optional but recommended) Backup your data first
+./backup-data.sh
+
+# 2. Run the deployment script again
+./deploy.sh production
+```
+
+The script will:
+- Automatically pull the latest code (`git pull`)
+- Update Python dependencies
+- Run database migrations
+- Restart the service
+- **Your database is preserved** (it's in `.gitignore`)
+
+**Manual Method:**
+
+```bash
+# 1. Backup data (recommended)
+./backup-data.sh
+
+# 2. Navigate to project directory
+cd /opt/family-calendar
+
+# 3. Pull latest changes
+git pull origin main
+
+# 4. Update Python dependencies
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 5. Run database migrations
+alembic upgrade head
+
+# 6. Restart the service
+sudo systemctl restart family-calendar
+sudo systemctl status family-calendar
+
+# 7. Check logs if needed
+sudo journalctl -u family-calendar -f
+```
+
+**Important:** Your database file `family_calendar.db` remains untouched during updates because it's ignored by git.
+
+## Backup and Restore
+
+### Automated Daily Backups
+
+Set up automated daily backups using cron:
+
+```bash
+# Edit your crontab
+crontab -e
+
+# Add this line to run backups daily at 2 AM
+0 2 * * * cd /path/to/family-calendar && ./backup-data.sh >> ~/family-calendar-backups/backup.log 2>&1
+```
+
+### Manual Backup
+
+```bash
+./backup-data.sh
+```
+
+Backups are stored in `~/family-calendar-backups/` with timestamps (e.g., `family_calendar_20260209.db`). Old backups (30+ days) are automatically cleaned up.
+
+### Restore from Backup
+
+**For Docker deployments:**
+
+```bash
+# Stop the application
+docker-compose -f docker-compose.prod.yml down
+
+# Restore the database
+cp ~/family-calendar-backups/family_calendar_YYYYMMDD.db ./data/family_calendar.db
+
+# Restart the application
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+**For bare-metal deployments:**
+
+```bash
+# Stop the service
+sudo systemctl stop family-calendar
+
+# Restore the database
+cp ~/family-calendar-backups/family_calendar_YYYYMMDD.db /opt/family-calendar/family_calendar.db
+
+# Start the service
+sudo systemctl start family-calendar
+```
+
+## Management Commands
+
+### Docker Deployments
+
 ```bash
 # View logs
 docker-compose -f docker-compose.prod.yml logs -f
@@ -104,210 +251,93 @@ docker-compose -f docker-compose.prod.yml down
 # Restart services
 docker-compose -f docker-compose.prod.yml restart
 
-# Update application
-docker-compose -f docker-compose.prod.yml up -d --build
-
 # Check container status
 docker-compose -f docker-compose.prod.yml ps
 ```
 
-## Alternative Deployment Options
-
-If Docker is not available in your environment, you can use alternative deployment methods:
-
-- **User-Space Deployment**: Run under a user account without system changes
-- **System-Wide Deployment**: Traditional deployment with system packages (legacy)
-
-For detailed instructions on these alternatives, see `docs/QUICK_START_DEPLOYMENT.md`.
-
-## Docker Configuration
-
-The Docker deployment includes pre-configured Nginx and application containers. The configuration files are located in:
-
-- **Nginx Config**: `nginx/nginx.conf` and `nginx/sites-available/family-calendar.conf`
-- **Docker Compose**: `docker-compose.prod.yml`
-- **Application**: `Dockerfile.prod`
-
-### Customizing Configuration
-
-To modify the configuration:
-
-1. **Edit Nginx settings**: Modify `nginx/sites-available/family-calendar.conf`
-2. **Change environment variables**: Edit `docker-compose.prod.yml`
-3. **Update SSL certificates**: Replace files in `ssl/` directory
-4. **Restart containers**: `docker-compose -f docker-compose.prod.yml restart`
-
-## SSL/HTTPS Setup
-
-### For Docker Deployment
-
-The Docker deployment includes self-signed SSL certificates for development. For production:
-
-1. **Replace SSL certificates**:
-   ```bash
-   # Copy your SSL certificates
-   cp your-cert.pem ssl/cert.pem
-   cp your-key.pem ssl/key.pem
-   
-   # Restart containers
-   docker-compose -f docker-compose.prod.yml restart
-   ```
-
-2. **Using Let's Encrypt** (if running on a domain):
-   ```bash
-   # Install Certbot
-   sudo apt install certbot -y
-   
-   # Get SSL certificate
-   sudo certbot certonly --standalone -d yourdomain.com
-   
-   # Copy certificates to ssl directory
-   sudo cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem ssl/cert.pem
-   sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem ssl/key.pem
-   sudo chown $USER:$USER ssl/cert.pem ssl/key.pem
-   
-   # Restart containers
-   docker-compose -f docker-compose.prod.yml restart
-   ```
-
-## Monitoring & Logging
-
-### Docker Logs
-
-View application logs:
-```bash
-# View all container logs
-docker-compose -f docker-compose.prod.yml logs -f
-
-# View specific container logs
-docker-compose -f docker-compose.prod.yml logs -f family-calendar
-docker-compose -f docker-compose.prod.yml logs -f nginx
-```
-
-### Health Monitoring
-
-The application includes health check endpoints:
-
-- `GET /health` - Basic health check
-- `GET /v1/events/version` - API version and last update info
-
-### Monitoring Script
-
-Create a simple monitoring script:
+### Bare-Metal Deployments
 
 ```bash
-#!/bin/bash
-# Health check script for Docker deployment
+# View logs
+sudo journalctl -u family-calendar -f
 
-HEALTH_URL="https://localhost/health"
-LOG_FILE="./logs/health.log"
+# Check service status
+sudo systemctl status family-calendar
 
-# Create logs directory if it doesn't exist
-mkdir -p logs
+# Restart service
+sudo systemctl restart family-calendar
 
-# Check health endpoint
-if curl -f -s -k $HEALTH_URL > /dev/null; then
-    echo "$(date): Health check passed" >> $LOG_FILE
-else
-    echo "$(date): Health check failed, restarting containers..." >> $LOG_FILE
-    docker-compose -f docker-compose.prod.yml restart
-    exit 1
-fi
+# Stop service
+sudo systemctl stop family-calendar
+
+# Start service
+sudo systemctl start family-calendar
+
+# Check Nginx status
+sudo systemctl status nginx
+
+# Restart Nginx
+sudo systemctl restart nginx
 ```
-
-```bash
-# Make executable
-chmod +x monitor.sh
-
-# Add to crontab (check every 5 minutes)
-(crontab -l 2>/dev/null; echo "*/5 * * * * cd /path/to/family-calendar && ./monitor.sh") | crontab -
-```
-
-## Access URLs
-
-After Docker deployment, your devices can access:
-
-### Wall Display (Tablet)
-- **URL**: `https://localhost:8443/frontend/wall.html` (or your domain:8443)
-- **Purpose**: Full-screen calendar display for wall-mounted tablets
-
-### Admin Interface (Phone/Computer)
-- **URL**: `https://localhost:8443/frontend/admin.html` (or your domain:8443)
-- **Purpose**: Event and kid management interface
-
-### API Endpoints
-- **Base URL**: `https://localhost:8443/v1/` (or your domain:8443)
-- **Health Check**: `https://localhost:8443/health` (or your domain:8443)
 
 ## Troubleshooting
 
-### Docker Deployment Issues
+### Docker: Port Conflicts
 
-1. **Containers won't start**
-   ```bash
-   # Check container logs
-   docker-compose -f docker-compose.prod.yml logs
-   
-   # Check if ports are in use
-   sudo netstat -tlnp | grep :80
-   sudo netstat -tlnp | grep :443
-   ```
+If ports 8080/8443 are already in use, edit `docker-compose.prod.yml` and change the port mappings:
 
-2. **SSL certificate issues**
-   ```bash
-   # Check certificate files
-   ls -la ssl/
-   
-   # Regenerate self-signed certificate
-   rm ssl/cert.pem ssl/key.pem
-   openssl req -x509 -newkey rsa:4096 -keyout ssl/key.pem -out ssl/cert.pem -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
-   ```
+```yaml
+ports:
+  - "9080:80"   # Change 8080 to 9080
+  - "9443:443"  # Change 8443 to 9443
+```
 
-3. **Database issues**
-   ```bash
-   # Check database file
-   ls -la data/
-   
-   # Recreate database
-   docker-compose -f docker-compose.prod.yml exec family-calendar alembic upgrade head
-   ```
+### Database Locked Errors
 
-4. **Health check fails**
-   ```bash
-   # Test health endpoint directly
-   curl -k https://localhost:8443/health
-   
-   # Check container status
-   docker-compose -f docker-compose.prod.yml ps
-   ```
+If you see "database is locked" errors, ensure only one instance of the application is running:
 
-### Performance Tuning
+```bash
+# Docker
+docker-compose -f docker-compose.prod.yml ps
 
-1. **Increase worker processes**:
-   Edit `docker-compose.prod.yml`:
-   ```yaml
-   environment:
-     - WORKERS=8
-   ```
+# Bare-metal
+sudo systemctl status family-calendar
+```
 
-2. **Enable Nginx caching**:
-   The Nginx configuration already includes caching for static files.
+### Permission Errors (Docker)
 
-### Security Considerations
+For Docker deployments, ensure proper ownership:
 
-1. **Replace self-signed certificates** with real SSL certificates for production
-2. **Configure firewall** to allow only necessary ports (22, 80, 443)
-3. **Regular updates**:
-   ```bash
-   # Update application
-   git pull origin main
-   docker-compose -f docker-compose.prod.yml up -d --build
-   ```
+```bash
+sudo chown -R 1000:1000 data logs ssl
+```
 
-4. **Backup strategy**:
-   ```bash
-   # Backup data directory
-   tar -czf backup_$(date +%Y%m%d).tar.gz data/ ssl/ logs/
-   ```
+### Service Won't Start (Bare-metal)
 
-This deployment guide provides a complete Docker-based production setup for your Family Calendar system. The wall device and phones will be able to access the HTML interfaces through the configured domain name with proper SSL security.
+Check the logs for errors:
+
+```bash
+sudo journalctl -u family-calendar -xe
+```
+
+Common issues:
+- Port 8000 already in use
+- Python dependencies not installed
+- Database migration issues
+
+### Nginx Configuration Errors
+
+Test nginx configuration:
+
+```bash
+sudo nginx -t
+```
+
+If errors, check `/etc/nginx/sites-available/family-calendar` for syntax issues.
+
+## Getting Help
+
+- Check logs for errors (see Management Commands above)
+- Review [GitHub Issues](https://github.com/midij/family-calendar/issues)
+- Verify prerequisites are installed correctly
+- Ensure firewall rules allow required ports
