@@ -17,6 +17,10 @@ services:
       - WORKERS=4
       - LOG_LEVEL=INFO
       - CORS_ORIGINS=["https://localhost", "http://localhost", "https://yourdomain.com", "http://yourdomain.com"]
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_ALLOWED_USER_IDS=${TELEGRAM_ALLOWED_USER_IDS:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-3.5-turbo}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

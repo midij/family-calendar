@@ -105,7 +105,6 @@ create_config() {
         cat > .env << EOF
 # Production Environment
 ENVIRONMENT=production
-DEBUG=false
 
 # Database
 DATABASE_URL=sqlite:///./family_calendar.db
@@ -122,10 +121,29 @@ WORKERS=4
 # Logging
 LOG_LEVEL=INFO
 LOG_FILE=/var/log/family-calendar/app.log
+
+# Telegram Bot Configuration (REQUIRED for Telegram bot feature)
+# Get bot token from @BotFather on Telegram
+TELEGRAM_BOT_TOKEN=
+
+# Comma-separated list of authorized Telegram user IDs
+# Get user IDs from @userinfobot on Telegram
+TELEGRAM_ALLOWED_USER_IDS=
+
+# OpenAI Configuration (REQUIRED for NLP event parsing)
+# Get API key from https://platform.openai.com/api-keys
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-3.5-turbo
 EOF
         echo "✅ Created .env configuration file"
+        echo "⚠️  IMPORTANT: Update .env with your Telegram and OpenAI credentials"
+        echo "   - TELEGRAM_BOT_TOKEN: Get from @BotFather"
+        echo "   - TELEGRAM_ALLOWED_USER_IDS: Get from @userinfobot"
+        echo "   - OPENAI_API_KEY: Get from OpenAI dashboard"
     else
         echo "ℹ️ .env file already exists, skipping creation"
+        echo "ℹ️  Note: If upgrading, add these new variables to .env:"
+        echo "   TELEGRAM_BOT_TOKEN, TELEGRAM_ALLOWED_USER_IDS, OPENAI_API_KEY"
     fi
 }
 
@@ -351,7 +369,15 @@ display_info() {
     echo "  1. Configure your domain name in /etc/nginx/sites-available/$NGINX_SITE"
     echo "  2. Set up SSL certificates with: sudo certbot --nginx -d yourdomain.com"
     echo "  3. Update CORS_ORIGINS in $PROJECT_DIR/.env with your domain"
-    echo "  4. Restart the service: sudo systemctl restart $SERVICE_NAME"
+    echo "  4. Configure Telegram Bot (if using NLP event creation):"
+    echo "     a. Edit $PROJECT_DIR/.env and add:"
+    echo "        - TELEGRAM_BOT_TOKEN (from @BotFather)"
+    echo "        - TELEGRAM_ALLOWED_USER_IDS (from @userinfobot)"
+    echo "        - OPENAI_API_KEY (from OpenAI dashboard)"
+    echo "     b. Restart: sudo systemctl restart $SERVICE_NAME"
+    echo "     c. Set webhook: curl \"https://yourdomain.com/v1/telegram/setup?webhook_url=https://yourdomain.com/v1/telegram/webhook\""
+    echo "     d. Verify: curl \"https://yourdomain.com/v1/telegram/webhook-info\""
+    echo "  5. See docs/TELEGRAM_BOT_SETUP.md for detailed setup guide"
     echo ""
 }
 
