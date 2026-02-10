@@ -7,10 +7,10 @@ import sys
 import os
 from datetime import datetime, timezone, timedelta
 
-# Add the app directory to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from database import get_db
+from app.database import get_db
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from seed_data import DataSeeder
