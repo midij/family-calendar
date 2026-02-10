@@ -57,7 +57,7 @@ setup_application() {
         git pull origin main
     else
         echo "📥 Cloning repository..."
-        git clone https://github.com/your-username/family-calendar.git $PROJECT_DIR
+        git clone https://github.com/midij/family-calendar.git $PROJECT_DIR
         cd $PROJECT_DIR
     fi
     
