@@ -8,6 +8,8 @@ services:
         GROUP_ID: ${GROUP_ID:-1000}
     container_name: family-calendar-app
     restart: unless-stopped
+    ports:
+      - "8088:8088"
     environment:
       - ENVIRONMENT=production
       - DEBUG=false
@@ -22,8 +24,8 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-3.5-turbo}
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
+      - family-calendar-data:/app/data
+      - family-calendar-logs:/app/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
       interval: 30s
@@ -53,3 +55,9 @@ services:
 networks:
   family-calendar-network:
     driver: bridge
+
+volumes:
+  family-calendar-data:
+    driver: local
+  family-calendar-logs:
+    driver: local
