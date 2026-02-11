@@ -88,6 +88,39 @@ None - all changes are additive
 - OpenAI quota errors show generic "insufficient quota" message
 - Timezone is hardcoded to Pacific (future: make configurable per user)
 
+### Fixed - 2026-02-10
+
+#### Bug: Recurring Events Not Showing in Calendar View
+- **Issue**: When creating recurring events via Telegram (e.g., "every Tuesday 4:30pm to 5:40pm, oscar fencing"), only the first instance appeared in the calendar. Subsequent weeks showed no events.
+- **Root Cause**: The frontend `wall.html` was calling the events API without the `expand=true` parameter, causing it to fetch only the master recurring event instead of expanded instances.
+- **Fix**: Updated `frontend/wall.html` to add `&expand=true` to the events fetch URL (line 312)
+- **Files Modified**: `frontend/wall.html`
+- **Impact**: All recurring events now properly display all instances across the calendar view
+
+#### Bug: Recurring Events Showing on Wrong Day of Week
+- **Issue**: When creating "every Tuesday 4:30pm", events appeared on Monday instead of Tuesday
+- **Root Cause**: RRULE weekday mismatch after timezone conversion
+  - User: "every Tuesday 4:30pm Pacific"
+  - Stored: Wednesday 12:30am UTC (correct conversion)
+  - RRULE: `BYDAY=TU` (still says Tuesday)
+  - Expansion: Finds next UTC Tuesday from Wednesday start → Wrong day
+- **Fix**: Adjust RRULE weekday to match UTC weekday after timezone conversion
+  - When converting local to UTC, check if weekday changed
+  - If changed, adjust RRULE `BYDAY` to match the UTC weekday
+  - Example: Tuesday 4:30pm PST → Wednesday 12:30am UTC → `BYDAY=TU` → `BYDAY=WE`
+- **Files Modified**:
+  - `app/services/nlp_service.py` - Calculate dates in user timezone (not server UTC)
+  - `app/api/v1/endpoints/telegram.py` - Adjust RRULE on timezone conversion
+  - `frontend/wall.html` - Added `expand=true` parameter
+- **No Database Changes**: Simple logic fix, no migrations needed
+- **Impact**: Recurring events now appear on the correct day of week
+
+#### Documentation: Timezone Fix
+- **Added**: Simple timezone fix guide at `docs/fixes/TIMEZONE.md`
+- **Content**: Problem, root cause, solution, and testing steps
+- **Added**: Rendering principles at `docs/RENDERING_PRINCIPLES.md`
+- **Content**: Golden rule for UTC to local time conversion when displaying data
+
 #### Future Enhancements
 - WhatsApp integration (after business verification)
 - Multi-timezone support per user

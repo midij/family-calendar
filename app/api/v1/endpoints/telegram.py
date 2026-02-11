@@ -111,12 +111,18 @@ async def handle_message(
                 await telegram_service.send_error_message(chat_id, error_msg)
                 return {"status": "parse_error"}
             
-            # Map kid names to IDs
+            # Map kid names to IDs (case-insensitive matching)
             kid_ids = []
             for kid_name in event_data.get("kid_names", []):
+                # Try exact match first, then case-insensitive
                 kid = next((k for k in kids if k.name == kid_name), None)
+                if not kid:
+                    kid = next((k for k in kids if k.name.lower() == kid_name.lower()), None)
                 if kid:
                     kid_ids.append(kid.id)
+                    logger.info(f"Matched kid name '{kid_name}' to kid ID {kid.id} ({kid.name})")
+                else:
+                    logger.warning(f"Could not match kid name '{kid_name}' to any kid in database")
             
             # Store kid IDs in event data
             event_data["kid_ids"] = kid_ids
@@ -263,20 +269,42 @@ async def confirm_event(
         from zoneinfo import ZoneInfo
         pacific_tz = ZoneInfo("America/Los_Angeles")
         
-        start_datetime = datetime.fromisoformat(
+        # Parse as local time first
+        start_datetime_local = datetime.fromisoformat(
             f"{event_data['date']}T{event_data['start_time']}:00"
-        ).replace(tzinfo=pacific_tz).astimezone(timezone.utc)
+        ).replace(tzinfo=pacific_tz)
         
-        end_datetime = datetime.fromisoformat(
+        end_datetime_local = datetime.fromisoformat(
             f"{event_data['date']}T{event_data['end_time']}:00"
-        ).replace(tzinfo=pacific_tz).astimezone(timezone.utc)
+        ).replace(tzinfo=pacific_tz)
+        
+        # Convert to UTC
+        start_datetime = start_datetime_local.astimezone(timezone.utc)
+        end_datetime = end_datetime_local.astimezone(timezone.utc)
+        
+        # Adjust RRULE if weekday changed due to timezone conversion
+        rrule_str = event_data.get("rrule")
+        if rrule_str and "BYDAY=" in rrule_str:
+            # If the UTC day is different from local day, adjust RRULE
+            local_weekday = start_datetime_local.weekday()
+            utc_weekday = start_datetime.weekday()
+            
+            if local_weekday != utc_weekday:
+                # Map weekday to RRULE day code
+                day_codes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
+                utc_day_code = day_codes[utc_weekday]
+                
+                # Replace the BYDAY value with UTC weekday
+                import re
+                rrule_str = re.sub(r'BYDAY=\w+', f'BYDAY={utc_day_code}', rrule_str)
+                logger.info(f"Adjusted RRULE for timezone conversion: {event_data.get('rrule')} → {rrule_str}")
         
         event_create = EventCreate(
             title=event_data["title"],
             location=event_data.get("location"),
             start_utc=start_datetime,
             end_utc=end_datetime,
-            rrule=event_data.get("rrule"),
+            rrule=rrule_str,
             exdates=None,
             kid_ids=event_data.get("kid_ids", []),
             category=event_data["category"],

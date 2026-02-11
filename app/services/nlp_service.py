@@ -72,10 +72,14 @@ class NLPService:
             result_text = response.choices[0].message.content
             result = json.loads(result_text)
             
+            # Log raw LLM response for debugging
+            logger.info(f"Raw LLM response: {json.dumps(result, indent=2)}")
+            
             # Validate and clean the parsed data
             cleaned_result = self._validate_and_clean_result(result, kids_list)
             
             logger.info(f"Successfully parsed event: {cleaned_result.get('title')}")
+            logger.info(f"Kid names extracted: {cleaned_result.get('kid_names', [])}")
             return cleaned_result
             
         except Exception as e:
@@ -174,7 +178,7 @@ Output:
 {{
   "title": "Piano lessons",
   "kid_names": [],
-  "date": "{self._get_next_weekday(1).strftime('%Y-%m-%d')}",
+  "date": "{self._get_next_weekday(1, timezone_str).strftime('%Y-%m-%d')}",
   "start_time": "16:00",
   "end_time": "17:00",
   "location": null,
@@ -190,7 +194,7 @@ Output:
 {{
   "title": "Dentist checkup",
   "kid_names": [],
-  "date": "{self._get_next_nth_weekday(1, 4).strftime('%Y-%m-%d')}",
+  "date": "{self._get_next_nth_weekday(1, 4, timezone_str).strftime('%Y-%m-%d')}",
   "start_time": "14:00",
   "end_time": "15:00",
   "location": null,
@@ -237,13 +241,22 @@ Parse the following message and return ONLY valid JSON:"""
             "missing_fields": result.get("missing_fields", [])
         }
         
-        # Validate kid names against available kids
+        # Validate kid names against available kids (case-insensitive)
         if cleaned["kid_names"]:
-            valid_kid_names = [kid.get("name", "") for kid in kids_list]
-            cleaned["kid_names"] = [
-                name for name in cleaned["kid_names"] 
-                if name in valid_kid_names
-            ]
+            # Create a mapping of lowercase names to actual names
+            name_mapping = {kid.get("name", "").lower(): kid.get("name", "") for kid in kids_list}
+            
+            # Match kid names case-insensitively and use the correct case from database
+            matched_names = []
+            for name in cleaned["kid_names"]:
+                actual_name = name_mapping.get(name.lower())
+                if actual_name:
+                    matched_names.append(actual_name)
+                    logger.info(f"Matched LLM kid name '{name}' to database kid '{actual_name}'")
+                else:
+                    logger.warning(f"Could not match LLM kid name '{name}' to any kid in database")
+            
+            cleaned["kid_names"] = matched_names
         
         # Validate RRULE if present
         if cleaned["rrule"]:
@@ -263,36 +276,47 @@ Parse the following message and return ONLY valid JSON:"""
         
         return cleaned
     
-    def _get_next_weekday(self, weekday: int) -> datetime:
+    def _get_next_weekday(self, weekday: int, timezone_str: str = "UTC") -> datetime:
         """
         Get the next occurrence of a weekday (0=Monday, 6=Sunday)
         
         Args:
             weekday: Day of week (0-6)
+            timezone_str: Timezone to use for calculating "today" (default: UTC)
             
         Returns:
-            datetime of next occurrence
+            datetime of next occurrence in the specified timezone
         """
-        today = datetime.now()
+        from zoneinfo import ZoneInfo
+        
+        # Get today in the target timezone
+        tz = ZoneInfo(timezone_str)
+        today = datetime.now(tz)
+        
         days_ahead = weekday - today.weekday()
         if days_ahead <= 0:
             days_ahead += 7
         return today + timedelta(days=days_ahead)
     
-    def _get_next_nth_weekday(self, nth: int, weekday: int) -> datetime:
+    def _get_next_nth_weekday(self, nth: int, weekday: int, timezone_str: str = "UTC") -> datetime:
         """
         Get the next nth weekday of the month (e.g., first Friday)
         
         Args:
             nth: Which occurrence (1-5, or -1 for last)
             weekday: Day of week (0=Monday, 6=Sunday)
+            timezone_str: Timezone to use for calculating "today" (default: UTC)
             
         Returns:
-            datetime of next occurrence
+            datetime of next occurrence in the specified timezone
         """
         from dateutil.rrule import rrule, MONTHLY
+        from zoneinfo import ZoneInfo
         
-        today = datetime.now()
+        # Get today in the target timezone
+        tz = ZoneInfo(timezone_str)
+        today = datetime.now(tz)
+        
         # Start from next month to avoid conflicts
         start_date = today.replace(day=1) + timedelta(days=32)
         start_date = start_date.replace(day=1)
