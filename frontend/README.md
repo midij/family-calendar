@@ -30,7 +30,7 @@ The frontend wall display is a responsive, wall-mounted calendar interface desig
 
 ### 🔧 Technical Features
 
-- **API Integration**: Connects to FastAPI backend at `http://localhost:8000/v1`
+- **API Integration**: Connects to FastAPI backend at `http://localhost:8088/v1`
 - **Version Polling**: Uses `/events/version` endpoint for real-time updates
 - **Error Handling**: Graceful error handling with user-friendly messages
 - **Offline Detection**: Shows offline status when connection is lost

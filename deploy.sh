@@ -223,7 +223,7 @@ server {
     
     # API endpoints
     location /v1/ {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8088;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -237,7 +237,7 @@ server {
     
     # Health check
     location /health {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8088;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -339,7 +339,7 @@ health_check() {
     
     sleep 5  # Wait for service to start
     
-    if curl -f -s http://localhost:8000/health > /dev/null; then
+    if curl -f -s http://localhost:8088/health > /dev/null; then
         echo "✅ Health check passed"
     else
         echo "❌ Health check failed"

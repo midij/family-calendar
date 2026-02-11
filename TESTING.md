@@ -28,7 +28,7 @@ python test_api.py --wait 3
 The `test_api.py` script provides comprehensive testing of all API endpoints:
 
 ```bash
-# Test with default settings (localhost:8000)
+# Test with default settings (localhost:8088)
 python test_api.py
 
 # Test with custom URL
@@ -74,21 +74,21 @@ For quick manual testing:
 
 ```bash
 # Test health
-curl http://localhost:8000/health
+curl http://localhost:8088/health
 
 # Get all kids
-curl http://localhost:8000/v1/kids/
+curl http://localhost:8088/v1/kids/
 
 # Create a kid
-curl -X POST http://localhost:8000/v1/kids/ \
+curl -X POST http://localhost:8088/v1/kids/ \
   -H "Content-Type: application/json" \
   -d '{"name": "Test Kid", "color": "#ff0000"}'
 
 # Get all events
-curl http://localhost:8000/v1/events/
+curl http://localhost:8088/v1/events/
 
 # Create an event
-curl -X POST http://localhost:8000/v1/events/ \
+curl -X POST http://localhost:8088/v1/events/ \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Test Event",
@@ -166,7 +166,7 @@ def test_new_feature(self):
 ### Server Won't Start
 ```bash
 # Check if port is in use
-lsof -i :8000
+lsof -i :8088
 
 # Kill existing process
 pkill -f uvicorn
@@ -177,7 +177,7 @@ uvicorn app.main:app --reload
 
 ### Tests Fail with Connection Error
 - Make sure server is running on the correct port
-- Check if server is accessible: `curl http://localhost:8000/health`
+- Check if server is accessible: `curl http://localhost:8088/health`
 - Try different port: `python test_api.py --url http://localhost:8001`
 
 ### Database Issues
@@ -193,7 +193,7 @@ For automated testing in CI/CD:
 pip install -r requirements.txt
 
 # Run tests
-python test_api.py --url http://localhost:8000
+python test_api.py --url http://localhost:8088
 ```
 
 ## Performance Testing
@@ -203,7 +203,7 @@ For basic performance testing:
 ```bash
 # Test with multiple requests
 for i in {1..10}; do
-  curl -s http://localhost:8000/v1/events/ > /dev/null
+  curl -s http://localhost:8088/v1/events/ > /dev/null
   echo "Request $i completed"
 done
 ```

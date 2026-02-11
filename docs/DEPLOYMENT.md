@@ -321,7 +321,7 @@ sudo journalctl -u family-calendar -xe
 ```
 
 Common issues:
-- Port 8000 already in use
+- Port 8088 already in use
 - Python dependencies not installed
 - Database migration issues
 

@@ -13,7 +13,7 @@ services:
       - DEBUG=false
       - DATABASE_URL=sqlite:///./data/family_calendar.db
       - HOST=0.0.0.0
-      - PORT=8000
+      - PORT=8088
       - WORKERS=4
       - LOG_LEVEL=INFO
       - CORS_ORIGINS=["https://localhost", "http://localhost", "https://yourdomain.com", "http://yourdomain.com"]
@@ -25,7 +25,7 @@ services:
       - ./data:/app/data
       - ./logs:/app/logs
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
       interval: 30s
       timeout: 10s
       retries: 3

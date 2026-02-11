@@ -18,7 +18,7 @@ from tests.test_browser_compatibility import BrowserCompatibilityTest
 class CompleteE2ETestRunner:
     """Complete end-to-end test runner"""
     
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "http://localhost:8088"):
         self.base_url = base_url
         self.test_suites = []
         self.results = {}
@@ -147,7 +147,7 @@ class CompleteE2ETestRunner:
 def main():
     """Main function to run all E2E tests"""
     parser = argparse.ArgumentParser(description="Run complete end-to-end tests for Family Calendar")
-    parser.add_argument("--url", default="http://localhost:8000", help="Base URL for the API")
+    parser.add_argument("--url", default="http://localhost:8088", help="Base URL for the API")
     parser.add_argument("--wait", type=int, default=0, help="Wait N seconds before starting tests")
     parser.add_argument("--report", help="Generate test report to specified file")
     parser.add_argument("--suite", choices=["all", "comprehensive", "frontend", "browser"], 

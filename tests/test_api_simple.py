@@ -15,7 +15,7 @@ class TestAPISimple:
         """Check if server is running, skip tests if not"""
         # Check if server is already running on port 8000
         try:
-            response = requests.get("http://127.0.0.1:8000/health", timeout=2)
+            response = requests.get("http://127.0.0.1:8088/health", timeout=2)
             if response.status_code == 200:
                 # Server is running, use it
                 yield None
@@ -28,25 +28,25 @@ class TestAPISimple:
     
     def test_server_health(self, server_process):
         """Test that the server is running and healthy"""
-        response = requests.get("http://127.0.0.1:8000/health")
+        response = requests.get("http://127.0.0.1:8088/health")
         assert response.status_code == 200
         assert response.json() == {"status": "healthy"}
     
     def test_root_endpoint(self, server_process):
         """Test the root endpoint"""
-        response = requests.get("http://127.0.0.1:8000/")
+        response = requests.get("http://127.0.0.1:8088/")
         assert response.status_code == 200
         assert response.json() == {"message": "Family Calendar API"}
     
     def test_kids_endpoint(self, server_process):
         """Test the kids endpoint"""
-        response = requests.get("http://127.0.0.1:8000/v1/kids/")
+        response = requests.get("http://127.0.0.1:8088/v1/kids/")
         assert response.status_code == 200
         assert isinstance(response.json(), list)
     
     def test_events_endpoint(self, server_process):
         """Test the events endpoint"""
-        response = requests.get("http://127.0.0.1:8000/v1/events/")
+        response = requests.get("http://127.0.0.1:8088/v1/events/")
         assert response.status_code == 200
         assert isinstance(response.json(), list)
     
@@ -58,7 +58,7 @@ class TestAPISimple:
             "avatar": "https://example.com/test.jpg"
         }
         
-        response = requests.post("http://127.0.0.1:8000/v1/kids/", json=kid_data)
+        response = requests.post("http://127.0.0.1:8088/v1/kids/", json=kid_data)
         assert response.status_code == 201
         
         data = response.json()
@@ -79,7 +79,7 @@ class TestAPISimple:
             "source": "manual"
         }
         
-        response = requests.post("http://127.0.0.1:8000/v1/events/", json=event_data)
+        response = requests.post("http://127.0.0.1:8088/v1/events/", json=event_data)
         assert response.status_code == 201
         
         data = response.json()
@@ -99,5 +99,5 @@ class TestAPISimple:
             "source": "manual"
         }
         
-        response = requests.post("http://127.0.0.1:8000/v1/events/", json=invalid_data)
+        response = requests.post("http://127.0.0.1:8088/v1/events/", json=invalid_data)
         assert response.status_code == 422  # Validation error

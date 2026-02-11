@@ -14,7 +14,7 @@ class AdminInterfaceTester:
     """Test suite for Admin Interface functionality"""
     
     def __init__(self):
-        self.base_url = "http://localhost:8000"
+        self.base_url = "http://localhost:8088"
         self.api_url = f"{self.base_url}/v1"
         self.session = requests.Session()
         self.test_kid_id = None

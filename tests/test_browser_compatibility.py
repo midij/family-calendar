@@ -17,7 +17,7 @@ import os
 class BrowserCompatibilityTest:
     """Browser compatibility and responsive design test suite"""
     
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "http://localhost:8088"):
         self.base_url = base_url
         self.session = requests.Session()
         self.test_results = {}
@@ -87,7 +87,7 @@ class BrowserCompatibilityTest:
         for endpoint in api_endpoints:
             # Test CORS preflight request
             headers = {
-                "Origin": "http://localhost:8000",
+                "Origin": "http://localhost:8088",
                 "Access-Control-Request-Method": "GET",
                 "Access-Control-Request-Headers": "Content-Type"
             }

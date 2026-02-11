@@ -109,10 +109,10 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Server will be available at:
-- API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
-- Wall Display: http://localhost:8000/frontend/wall.html
-- Admin: http://localhost:8000/frontend/admin.html
+- API: http://localhost:8088
+- API Docs: http://localhost:8088/docs
+- Wall Display: http://localhost:8088/frontend/wall.html
+- Admin: http://localhost:8088/frontend/admin.html
 
 ### Setup Cloudflare Tunnel (for webhook)
 
@@ -137,7 +137,7 @@ sudo dpkg -i cloudflared-linux-amd64.deb
 In a **separate terminal** (keep it running):
 
 ```bash
-cloudflared tunnel --url http://localhost:8000
+cloudflared tunnel --url http://localhost:8088
 ```
 
 You'll see output like:
@@ -154,12 +154,12 @@ With both the server and tunnel running:
 
 ```bash
 # Replace YOUR_TUNNEL_URL with the actual cloudflare URL
-curl "http://localhost:8000/v1/telegram/setup?webhook_url=https://YOUR_TUNNEL_URL/v1/telegram/webhook"
+curl "http://localhost:8088/v1/telegram/setup?webhook_url=https://YOUR_TUNNEL_URL/v1/telegram/webhook"
 ```
 
 Example:
 ```bash
-curl "http://localhost:8000/v1/telegram/setup?webhook_url=https://random-words-here.trycloudflare.com/v1/telegram/webhook"
+curl "http://localhost:8088/v1/telegram/setup?webhook_url=https://random-words-here.trycloudflare.com/v1/telegram/webhook"
 ```
 
 Expected response:
@@ -175,7 +175,7 @@ Expected response:
 
 ```bash
 # Check webhook status
-curl http://localhost:8000/v1/telegram/webhook-info
+curl http://localhost:8088/v1/telegram/webhook-info
 
 # Or check directly from Telegram API
 curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo"
@@ -208,7 +208,7 @@ curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo"
 4. **Confirm event**:
    - Click ✅ Confirm button
    - Expected: "Event created!" message
-   - Check calendar at http://localhost:8000/frontend/wall.html
+   - Check calendar at http://localhost:8088/frontend/wall.html
 
 ### Test Commands
 
@@ -234,7 +234,7 @@ INFO: 91.108.5.139:0 - "POST /v1/telegram/webhook HTTP/1.1" 200 OK
 
 ```bash
 # Test NLP parsing (requires OpenAI credits)
-curl -X POST http://localhost:8000/v1/telegram/webhook \
+curl -X POST http://localhost:8088/v1/telegram/webhook \
   -H "Content-Type: application/json" \
   -d '{
     "message": {
@@ -537,7 +537,7 @@ curl https://api.openai.com/v1/models \
 curl "https://api.telegram.org/bot<TOKEN>/getMe"
 
 # Test local endpoint
-curl http://localhost:8000/health
+curl http://localhost:8088/health
 ```
 
 ---

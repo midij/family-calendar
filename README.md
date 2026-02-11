@@ -26,9 +26,9 @@ docker-compose up -d
 docker exec -it family-calendar-app alembic upgrade head
 
 # Access the app
-# Wall Display: http://localhost:8000/frontend/wall.html
-# Admin Interface: http://localhost:8000/frontend/admin.html
-# API Docs: http://localhost:8000/docs
+# Wall Display: http://localhost:8088/frontend/wall.html
+# Admin Interface: http://localhost:8088/frontend/admin.html
+# API Docs: http://localhost:8088/docs
 ```
 
 ### Local Development (Without Docker)
@@ -52,10 +52,10 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```bash
 # In a separate terminal, run cloudflare tunnel
 brew install cloudflare/cloudflare/cloudflared  # One-time install
-cloudflared tunnel --url http://localhost:8000
+cloudflared tunnel --url http://localhost:8088
 
 # Copy the HTTPS URL and set webhook:
-curl "http://localhost:8000/v1/telegram/setup?webhook_url=https://YOUR_TUNNEL_URL/v1/telegram/webhook"
+curl "http://localhost:8088/v1/telegram/setup?webhook_url=https://YOUR_TUNNEL_URL/v1/telegram/webhook"
 ```
 
 ## Deployment
@@ -138,7 +138,7 @@ Create calendar events via natural language messages in Telegram!
 ## Documentation
 
 - [Detailed Deployment Guide](docs/DEPLOYMENT.md)
-- [API Documentation](http://localhost:8000/docs) (when running)
+- [API Documentation](http://localhost:8088/docs) (when running)
 - [Development Tasks](docs/DEV_TASKS.md)
 
 ## Tech Stack

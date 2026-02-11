@@ -140,7 +140,7 @@ Body 示例：
 - `docker compose build`  
 - `docker compose up -d`  
 - 可选：`docker exec -it familycal_app python -m server.seed`  
-- 访问：`http://<宿主机IP>:8000/wall`（平板添加到主屏幕）
+- 访问：`http://<宿主机IP>:8088/wall`（平板添加到主屏幕）
 
 ---
 
