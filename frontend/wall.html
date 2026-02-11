@@ -309,7 +309,7 @@
                 const start = info.start.toISOString();
                 const end = info.end.toISOString();
                 
-                const response = await fetch(`${API_BASE_URL}/events/?start=${start}&end=${end}`);
+                const response = await fetch(`${API_BASE_URL}/events/?start=${start}&end=${end}&expand=true`);
                 if (!response.ok) throw new Error('Failed to fetch events');
                 
                 const events = await response.json();
@@ -327,11 +327,13 @@
                     // Use first kid's color, or purple for family events
                     const backgroundColor = kidColors.length > 0 ? kidColors[0] : '#9f7aea';
                     
+                    // IMPORTANT: Pass UTC times to FullCalendar
+                    // FullCalendar automatically converts to browser's local timezone for display
                     return {
                         id: event.id,
                         title: event.title,
-                        start: event.start_utc,
-                        end: event.end_utc,
+                        start: event.start_utc,  // UTC string, FullCalendar converts to local
+                        end: event.end_utc,      // UTC string, FullCalendar converts to local
                         backgroundColor: backgroundColor,
                         borderColor: backgroundColor,
                         extendedProps: {
@@ -376,6 +378,7 @@
                 : 'No kids assigned';
             
             const location = event.extendedProps.location || 'No location';
+            // IMPORTANT: event.start and event.end are already in local time (FullCalendar converted them)
             const start = event.start.toLocaleString();
             const end = event.end ? event.end.toLocaleString() : 'N/A';
             
