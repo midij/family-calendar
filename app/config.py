@@ -23,6 +23,14 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "family_calendar"
     POSTGRES_PORT: str = "5432"
     
+    # Telegram Bot settings
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_ALLOWED_USER_IDS: str = ""  # Comma-separated Telegram user IDs
+    
+    # OpenAI settings
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-3.5-turbo"  # Cost-effective option
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         

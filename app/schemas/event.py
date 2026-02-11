@@ -11,7 +11,7 @@ class EventBase(BaseModel):
     exdates: Optional[List[str]] = None
     kid_ids: Optional[List[int]] = None
     category: str = Field(..., pattern="^(school|after-school|family|sports|education|health|test)$")
-    source: str = Field(default="manual", pattern="^(manual|ics|google|outlook)$")
+    source: str = Field(default="manual", pattern="^(manual|ics|google|outlook|telegram)$")
     created_by: Optional[str] = None
     
     @field_validator('kid_ids', mode='before')
@@ -42,7 +42,7 @@ class EventUpdate(BaseModel):
     exdates: Optional[List[str]] = None
     kid_ids: Optional[List[int]] = None
     category: Optional[str] = Field(None, pattern="^(school|after-school|family|sports|education|health|test)$")
-    source: Optional[str] = Field(None, pattern="^(manual|ics|google|outlook)$")
+    source: Optional[str] = Field(None, pattern="^(manual|ics|google|outlook|telegram)$")
 
 class Event(EventBase):
     id: int

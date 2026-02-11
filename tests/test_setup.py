@@ -10,7 +10,7 @@ import sys
 def test_api_health():
     """Test if the API is responding"""
     try:
-        response = requests.get("http://localhost:8000/health")
+        response = requests.get("http://localhost:8088/health")
         if response.status_code == 200:
             print("✅ API health check passed")
             return True
@@ -24,7 +24,7 @@ def test_api_health():
 def test_database_connection():
     """Test if the database is accessible"""
     try:
-        response = requests.get("http://localhost:8000/v1/kids")
+        response = requests.get("http://localhost:8088/v1/kids")
         if response.status_code == 200:
             print("✅ Database connection working")
             return True

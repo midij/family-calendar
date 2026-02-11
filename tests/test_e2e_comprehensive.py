@@ -16,7 +16,7 @@ import statistics
 class E2ETestSuite:
     """Comprehensive end-to-end test suite for Family Calendar"""
     
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "http://localhost:8088"):
         self.base_url = base_url
         self.session = requests.Session()
         self.performance_metrics = {}

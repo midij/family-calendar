@@ -16,7 +16,7 @@ import statistics
 class FrontendPerformanceTest:
     """Frontend performance and compatibility test suite"""
     
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "http://localhost:8088"):
         self.base_url = base_url
         self.session = requests.Session()
         self.performance_metrics = {}
@@ -225,7 +225,7 @@ class FrontendPerformanceTest:
         
         # Test CORS preflight request
         headers = {
-            "Origin": "http://localhost:8000",
+            "Origin": "http://localhost:8088",
             "Access-Control-Request-Method": "GET",
             "Access-Control-Request-Headers": "Content-Type"
         }

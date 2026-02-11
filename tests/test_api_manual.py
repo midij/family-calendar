@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 
 
 class APITester:
-    def __init__(self, base_url="http://localhost:8000"):
+    def __init__(self, base_url="http://localhost:8088"):
         self.base_url = base_url
         self.session = requests.Session()
     
@@ -27,7 +27,7 @@ class APITester:
                 print(f"❌ Server health check failed: {response.status_code}")
                 return False
         except requests.exceptions.ConnectionError:
-            print("❌ Cannot connect to server. Make sure it's running on http://localhost:8000")
+            print("❌ Cannot connect to server. Make sure it's running on http://localhost:8088")
             return False
     
     def test_kids_api(self):
@@ -306,7 +306,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="Test Family Calendar API")
-    parser.add_argument("--url", default="http://localhost:8000", help="Base URL for the API")
+    parser.add_argument("--url", default="http://localhost:8088", help="Base URL for the API")
     parser.add_argument("--wait", type=int, default=0, help="Wait N seconds before starting tests")
     
     args = parser.parse_args()

@@ -794,6 +794,23 @@
             `).join('');
         }
 
+        // Convert RRULE from UTC weekday to local weekday for display
+        function convertRRuleToLocalTime(rrule, localStartDate) {
+            // Extract BYDAY from RRULE
+            const bydayMatch = rrule.match(/BYDAY=(\w+)/);
+            if (!bydayMatch) return rrule;
+            
+            const utcDay = bydayMatch[1];
+            
+            // Get local weekday from the start date
+            const dayMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+            const localWeekday = localStartDate.getDay(); // 0=Sunday, 6=Saturday
+            const localDay = dayMap[localWeekday];
+            
+            // Replace UTC day with local day
+            return rrule.replace(/BYDAY=\w+/, `BYDAY=${localDay}`);
+        }
+
         // Render events list
         function renderEventsList() {
             const container = document.getElementById('eventsList');
@@ -804,6 +821,9 @@
             }
             
             container.innerHTML = events.map(event => {
+                // IMPORTANT: Convert UTC to local time for display
+                // event.start_utc and event.end_utc are in UTC
+                // new Date() automatically converts to browser's local timezone
                 const startDate = new Date(event.start_utc);
                 const endDate = new Date(event.end_utc);
                 const eventKids = event.kid_ids ? event.kid_ids.map(id => {
@@ -811,13 +831,24 @@
                     return kid ? kid.name : `Kid ${id}`;
                 }).join(', ') : 'None';
                 
+                // Check if recurring
+                const isRecurring = event.rrule && event.rrule.length > 0;
+                const recurringBadge = isRecurring ? '<span style="background: #4299e1; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px;">🔁 Recurring</span>' : '';
+                
+                // Convert RRULE to local timezone for display
+                let displayRRule = event.rrule;
+                if (isRecurring && displayRRule.includes('BYDAY=')) {
+                    displayRRule = convertRRuleToLocalTime(event.rrule, startDate);
+                }
+                
                 return `
                     <div class="list-item">
                         <div class="list-item-info">
-                            <div class="list-item-title">${event.title}</div>
+                            <div class="list-item-title">${event.title}${recurringBadge}</div>
                             <div class="list-item-details">
                                 ${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString()} - ${endDate.toLocaleTimeString()}<br>
                                 ${event.location || 'No location'} | ${event.category} | Kids: ${eventKids}
+                                ${isRecurring ? '<br><small style="color: #4299e1;">Repeats: ' + displayRRule + ' (Local Time)</small>' : ''}
                             </div>
                         </div>
                         <div class="list-item-actions">
@@ -908,21 +939,37 @@
             const endLocal = new Date(`${endDate}T${endTime}`);
             
             // Convert to UTC - JavaScript Date objects automatically handle timezone conversion
-            const startUtc = startLocal.toISOString();
-            const endUtc = endLocal.toISOString();
+            const startUtc = new Date(startLocal.getTime());
+            const endUtc = new Date(endLocal.getTime());
             
             const selectedKids = Array.from(document.getElementById('eventKids').selectedOptions)
                 .map(option => option.value);
             
+            // Get RRULE and adjust if weekday changed due to timezone conversion
+            let rruleValue = document.getElementById('eventRRule').value.trim() || null;
+            if (rruleValue && rruleValue.includes('BYDAY=')) {
+                // Check if weekday changed after UTC conversion
+                const localWeekday = startLocal.getDay();
+                const utcWeekday = startUtc.getUTCDay();
+                
+                if (localWeekday !== utcWeekday) {
+                    // Convert RRULE BYDAY from local to UTC
+                    const dayMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+                    const utcDay = dayMap[utcWeekday];
+                    rruleValue = rruleValue.replace(/BYDAY=\w+/, `BYDAY=${utcDay}`);
+                    console.log('Adjusted RRULE for UTC conversion:', rruleValue);
+                }
+            }
+            
             const formData = {
                 title: document.getElementById('eventTitle').value.trim(),
                 location: document.getElementById('eventLocation').value.trim() || null,
-                start_utc: startUtc,
-                end_utc: endUtc,
+                start_utc: startUtc.toISOString(),
+                end_utc: endUtc.toISOString(),
                 kid_ids: selectedKids.length > 0 ? selectedKids : null,
                 category: document.getElementById('eventCategory').value,
                 source: 'manual',
-                rrule: document.getElementById('eventRRule').value.trim() || null
+                rrule: rruleValue
             };
             
             try {
@@ -984,19 +1031,27 @@
             const event = events.find(e => e.id === eventId);
             if (!event) return;
             
+            // IMPORTANT: Convert UTC to local time for editing
+            // event.start_utc and event.end_utc are in UTC
+            // new Date() converts to browser's local timezone
             const startDate = new Date(event.start_utc);
             const endDate = new Date(event.end_utc);
             
             document.getElementById('eventTitle').value = event.title;
             document.getElementById('eventLocation').value = event.location || '';
-            // Convert UTC times to local time for form display
-            // JavaScript Date objects automatically handle timezone conversion
+            // Display local date/time in form inputs
             document.getElementById('eventStartDate').value = startDate.toISOString().split('T')[0];
             document.getElementById('eventStartTime').value = startDate.toTimeString().slice(0, 5);
             document.getElementById('eventEndDate').value = endDate.toISOString().split('T')[0];
             document.getElementById('eventEndTime').value = endDate.toTimeString().slice(0, 5);
             document.getElementById('eventCategory').value = event.category;
-            document.getElementById('eventRRule').value = event.rrule || '';
+            
+            // Convert RRULE to local timezone for editing
+            let displayRRule = event.rrule || '';
+            if (displayRRule && displayRRule.includes('BYDAY=')) {
+                displayRRule = convertRRuleToLocalTime(displayRRule, startDate);
+            }
+            document.getElementById('eventRRule').value = displayRRule;
             
             // Select kids
             const kidsSelect = document.getElementById('eventKids');
